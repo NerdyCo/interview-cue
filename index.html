@@ -2,11 +2,21 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
+    <title>Cue</title>
   </head>
   <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+    <div id="panel">
+      <header id="bar">
+        <span id="mode">INTERACT</span>
+        <button id="toggle" type="button">Read mode</button>
+      </header>
+      <main id="body">
+        <p>Cue siap.</p>
+        <p class="hint">
+          Drag header untuk memindahkan. Tarik tepi untuk mengubah ukuran.
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>

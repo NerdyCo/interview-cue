@@ -1,3 +1,11 @@
-// oxlint-disable eslint-plugin-unicorn/no-empty-file
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { contextBridge, ipcRenderer } from "electron";
+import { IPC, type CueApi, type CueState } from "./shared/ipc";
+
+contextBridge.exposeInMainWorld("cue", {
+  setMode: (mode) => ipcRenderer.send(IPC.setMode, mode),
+  toggleMode: () => ipcRenderer.send(IPC.toggleMode),
+  getState: () => ipcRenderer.invoke(IPC.getState),
+  onState: (cb) => {
+    ipcRenderer.on(IPC.state, (_e, s: CueState) => cb(s));
+  },
+} satisfies CueApi);
