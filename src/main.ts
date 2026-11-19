@@ -4,9 +4,13 @@ import { createCueWindow } from "./main/windows";
 import {
   attachOverlay,
   getCueState,
+  nextCard,
+  openDeck,
+  prevCard,
   setMode,
   toggleMode,
 } from "./main/overlay";
+import { registerHotkeys, unregisterHotkeys } from "./main/hotkeys";
 import { IPC, type OverlayMode } from "./shared/ipc";
 
 if (started) app.quit();
@@ -19,11 +23,17 @@ app.whenReady().then(() => {
 
   ipcMain.on(IPC.setMode, (_e, mode: OverlayMode) => setMode(mode));
   ipcMain.on(IPC.toggleMode, () => toggleMode());
+  ipcMain.on(IPC.nextCard, () => nextCard());
+  ipcMain.on(IPC.prevCard, () => prevCard());
+  ipcMain.handle(IPC.openDeck, () => openDeck());
   ipcMain.handle(IPC.getState, () => getCueState());
 
-  win.once("ready-to-show", () => {
-    win.showInactive();
-  });
+  const failed = registerHotkeys();
+  if (failed.length > 0) {
+    console.warn("[cue] Hotkey gagal didaftarkan:", failed.join(", "));
+  }
+
+  win.once("ready-to-show", () => win.showInactive());
 
   if (!app.isPackaged) {
     win.webContents.openDevTools({ mode: "detach" });
@@ -35,6 +45,8 @@ app.whenReady().then(() => {
     }
   });
 });
+
+app.on("will-quit", () => unregisterHotkeys());
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

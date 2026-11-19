@@ -8,7 +8,7 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: transparent; /* wajib, kalau tidak: kotak putih */
+  background: transparent;
   font-family: "Segoe UI", system-ui, sans-serif;
   color: var(--fg);
   overflow: hidden;
@@ -24,7 +24,6 @@ body {
   border-radius: 10px;
 }
 
-/* Area drag. user-select:none mencegah teks terseleksi saat menyeret. */
 #bar {
   display: flex;
   align-items: center;
@@ -37,7 +36,6 @@ body {
   cursor: move;
 }
 
-/* Tombol di dalam area drag WAJIB no-drag, kalau tidak tidak bisa diklik. */
 #toggle {
   app-region: no-drag;
   cursor: pointer;
@@ -69,7 +67,6 @@ body {
   opacity: 0.6;
 }
 
-/* Mode baca: sedikit lebih tembus pandang, tanda visual jelas. */
 body.read #panel {
   background: rgba(15, 23, 42, 0.62);
   border-color: rgba(148, 163, 184, 0.3);
@@ -77,4 +74,80 @@ body.read #panel {
 
 body.read #bar {
   cursor: default;
+}
+
+#actions {
+  display: flex;
+  gap: 6px;
+  app-region: no-drag;
+}
+
+#actions button {
+  app-region: no-drag;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+}
+
+#meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  opacity: 0.65;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#error {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.5);
+}
+
+#card-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+#card-body {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+#card-body ul,
+#card-body ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+#card-body li {
+  margin: 3px 0;
+}
+
+#card-body code {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+#card-body pre {
+  overflow-x: auto;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+}
+
+#card-body strong {
+  color: #fff;
 }

@@ -8,13 +8,22 @@
     <div id="panel">
       <header id="bar">
         <span id="mode">INTERACT</span>
-        <button id="toggle" type="button">Read mode</button>
+        <div id="actions">
+          <button id="open" type="button">Buka deck</button>
+          <button id="toggle" type="button">Read</button>
+        </div>
       </header>
+
+      <div id="meta">
+        <span id="deck">Belum ada deck</span>
+        <span id="counter"></span>
+      </div>
+
+      <p id="error" hidden></p>
+
       <main id="body">
-        <p>Cue siap.</p>
-        <p class="hint">
-          Drag header untuk memindahkan. Tarik tepi untuk mengubah ukuran.
-        </p>
+        <h2 id="card-title"></h2>
+        <div id="card-body"></div>
       </main>
     </div>
     <script type="module" src="/src/renderer.ts"></script>
