@@ -1,9 +1,25 @@
-import { BrowserWindow, dialog } from "electron";
-import { IPC, type CueState, type OverlayMode } from "../shared/ipc";
+import { BrowserWindow, dialog, screen } from "electron";
+import path from "node:path";
+import {
+  IPC,
+  HOTKEY_ACTIONS,
+  type CueState,
+  type HotkeyAction,
+  type HotkeyMap,
+  type OverlayMode,
+} from "../shared/ipc";
 import { loadDeck } from "./deck";
-import { getSettings, saveSettings } from "./store";
+import {
+  DEFAULT_HOTKEYS,
+  getSettings,
+  saveSettings,
+  setHotkey,
+  type Bounds,
+} from "./store";
 import { hideAll, isHidden, showAll } from "./visibility";
 import { updateTray } from "./tray";
+import { applyHotkeys } from "./hotkeys";
+import { stopWatching, watchDeck } from "./watcher";
 
 const state: CueState = {
   mode: "interact",
@@ -16,21 +32,54 @@ const state: CueState = {
   cards: [],
   cardIndex: 0,
   error: null,
+  hotkeys: { ...DEFAULT_HOTKEYS },
+  hotkeyConflicts: [],
+  settingsOpen: false,
 };
 
 let win: BrowserWindow | null = null;
+let deckPath: string | null = null;
 
 export function attachOverlay(window: BrowserWindow): void {
   win = window;
-  state.disclaimerAcked = getSettings().disclaimerAcked;
-  applyState();
+
+  const saved = getSettings();
+  state.disclaimerAcked = saved.disclaimerAcked;
+  state.hotkeys = saved.hotkeys;
+
+  restoreBounds(saved.bounds);
+
+  window.on("moved", persistBounds);
+  window.on("resized", persistBounds);
+
   window.on("closed", () => {
     win = null;
   });
+
+  applyState();
+}
+
+function restoreBounds(bounds: Bounds | null): void {
+  if (!win || win.isDestroyed() || !bounds) return;
+
+  const display = screen.getDisplayMatching(bounds);
+  const area = display.workArea;
+
+  const width = Math.min(bounds.width, area.width);
+  const height = Math.min(bounds.height, area.height);
+  const x = Math.max(area.x, Math.min(bounds.x, area.x + area.width - width));
+  const y = Math.max(area.y, Math.min(bounds.y, area.y + area.height - height));
+
+  win.setBounds({ x, y, width, height });
+}
+
+function persistBounds(): void {
+  if (!win || win.isDestroyed() || isHidden()) return;
+  saveSettings({ bounds: win.getBounds() });
 }
 
 export function getCueState(): CueState {
-  return { ...state };
+  return { ...state, hotkeys: { ...state.hotkeys } };
 }
 
 export function setMode(mode: OverlayMode): void {
@@ -61,13 +110,11 @@ export function toggleSession(): void {
   if (!state.disclaimerAcked) return;
 
   state.sessionActive = !state.sessionActive;
-
   if (state.sessionActive) {
     state.privateMode = true;
     state.mode = "read";
     state.error = null;
   }
-
   applyState();
 }
 
@@ -85,7 +132,7 @@ export function panicHide(): void {
 
 export async function ackDisclaimer(): Promise<void> {
   state.disclaimerAcked = true;
-  await saveSettings({ disclaimerAcked: true });
+  saveSettings({ disclaimerAcked: true });
   applyState();
 }
 
@@ -102,6 +149,13 @@ function goToCard(index: number): void {
   const clamped = Math.max(0, Math.min(index, state.cards.length - 1));
   if (clamped === state.cardIndex) return;
   state.cardIndex = clamped;
+  applyState();
+}
+
+export function setSettingsOpen(open: boolean): void {
+  state.settingsOpen = open;
+
+  if (open) state.mode = "interact";
   applyState();
 }
 
@@ -122,18 +176,89 @@ export async function openDeck(): Promise<void> {
   });
 
   if (result.canceled || result.filePaths.length === 0) return;
+  await loadAndWatch(result.filePaths[0], true);
+}
 
+export async function reopenLastDeck(): Promise<void> {
+  const saved = getSettings().lastDeckPath;
+  if (!saved) return;
+  await loadAndWatch(saved, false);
+}
+
+async function loadAndWatch(
+  filePath: string,
+  resetIndex: boolean,
+): Promise<void> {
   try {
-    const deck = await loadDeck(result.filePaths[0]);
+    const deck = await loadDeck(filePath);
     state.deckName = deck.name;
     state.cards = deck.cards;
-    state.cardIndex = 0;
     state.error = null;
+
+    if (resetIndex) {
+      state.cardIndex = 0;
+    } else {
+      state.cardIndex = Math.min(state.cardIndex, deck.cards.length - 1);
+    }
+
+    deckPath = filePath;
+    saveSettings({ lastDeckPath: filePath });
+
+    watchDeck(filePath, () => {
+      if (deckPath) void loadAndWatch(deckPath, false);
+    });
   } catch (err) {
     state.error = err instanceof Error ? err.message : String(err);
+
+    if (!resetIndex) {
+      state.deckName = `${path.basename(filePath)} (gagal dibuka)`;
+    }
   }
 
   applyState();
+}
+
+export async function rebindHotkey(
+  action: HotkeyAction,
+  accelerator: string,
+): Promise<HotkeyAction[]> {
+  if (!HOTKEY_ACTIONS.includes(action)) return state.hotkeyConflicts;
+
+  setHotkey(action, accelerator);
+  state.hotkeys = { ...state.hotkeys, [action]: accelerator };
+
+  const failed = applyHotkeys(state.hotkeys);
+  state.hotkeyConflicts = failed;
+  state.error =
+    failed.length > 0
+      ? `Tombol ini dipakai aplikasi lain atau bentrok: ${failed.join(", ")}. Pilih kombinasi lain.`
+      : null;
+
+  applyState();
+  return failed;
+}
+
+export async function resetHotkeys(): Promise<HotkeyAction[]> {
+  saveSettings({ hotkeys: { ...DEFAULT_HOTKEYS } });
+  state.hotkeys = { ...DEFAULT_HOTKEYS };
+
+  const failed = applyHotkeys(state.hotkeys);
+  state.hotkeyConflicts = failed;
+  state.error = null;
+  applyState();
+  return failed;
+}
+
+export function reportHotkeyConflicts(failed: HotkeyAction[]): void {
+  state.hotkeyConflicts = failed;
+  if (failed.length > 0) {
+    state.error = `Hotkey dipakai aplikasi lain: ${failed.join(", ")}. Buka pengaturan untuk mengubahnya.`;
+  }
+  applyState();
+}
+
+export async function cleanupOverlay(): Promise<void> {
+  await stopWatching();
 }
 
 function applyState(): void {

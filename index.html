@@ -13,7 +13,8 @@
           <button id="private" type="button">Private: OFF</button>
           <button id="open" type="button">Deck</button>
           <button id="toggle" type="button">Read</button>
-          <button id="hide" type="button" title="F9">Sembunyikan</button>
+          <button id="settings" type="button">⚙</button>
+          <button id="hide" type="button" title="Panic hide">✕</button>
         </div>
       </header>
 
@@ -34,6 +35,19 @@
         <h2 id="card-title"></h2>
         <div id="card-body"></div>
       </main>
+
+      <section id="settings-panel" hidden>
+        <h2>Hotkey</h2>
+        <p class="hint">
+          Klik kolom tombol, lalu tekan kombinasi baru. Tanpa Ctrl/Alt/Shift,
+          hanya tombol F1–F12 yang diizinkan.
+        </p>
+        <div id="hotkey-list"></div>
+        <div class="row">
+          <button id="hotkey-reset" type="button">Kembali ke default</button>
+          <button id="settings-close" type="button">Tutup</button>
+        </div>
+      </section>
 
       <section id="disclaimer" hidden>
         <h2>Sebelum memakai private overlay</h2>

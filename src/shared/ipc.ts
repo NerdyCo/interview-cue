@@ -5,6 +5,34 @@ export interface CueCard {
   html: string;
 }
 
+export type HotkeyAction =
+  | "nextCard"
+  | "prevCard"
+  | "toggleMode"
+  | "togglePrivate"
+  | "toggleSession"
+  | "panicHide";
+
+export const HOTKEY_ACTIONS: readonly HotkeyAction[] = [
+  "nextCard",
+  "prevCard",
+  "toggleMode",
+  "togglePrivate",
+  "toggleSession",
+  "panicHide",
+] as const;
+
+export const HOTKEY_LABELS: Record<HotkeyAction, string> = {
+  nextCard: "Kartu berikutnya",
+  prevCard: "Kartu sebelumnya",
+  toggleMode: "Toggle interact",
+  togglePrivate: "Toggle private",
+  toggleSession: "Toggle penanda sesi",
+  panicHide: "Panic hide",
+};
+
+export type HotkeyMap = Record<HotkeyAction, string>;
+
 export interface CueState {
   mode: OverlayMode;
   privateMode: boolean;
@@ -16,6 +44,9 @@ export interface CueState {
   cards: CueCard[];
   cardIndex: number;
   error: string | null;
+  hotkeys: HotkeyMap;
+  hotkeyConflicts: HotkeyAction[];
+  settingsOpen: boolean;
 }
 
 export interface CueApi {
@@ -28,6 +59,12 @@ export interface CueApi {
   openDeck(): void;
   nextCard(): void;
   prevCard(): void;
+  setSettingsOpen(open: boolean): void;
+  rebindHotkey(
+    action: HotkeyAction,
+    accelerator: string,
+  ): Promise<HotkeyAction[]>;
+  resetHotkeys(): Promise<HotkeyAction[]>;
   getState(): Promise<CueState>;
   onState(cb: (s: CueState) => void): void;
 }
@@ -42,6 +79,9 @@ export const IPC = {
   openDeck: "cue:open-deck",
   nextCard: "cue:next-card",
   prevCard: "cue:prev-card",
+  setSettingsOpen: "cue:set-settings-open",
+  rebindHotkey: "cue:rebind-hotkey",
+  resetHotkeys: "cue:reset-hotkeys",
   getState: "cue:get-state",
   state: "cue:state",
 } as const;
