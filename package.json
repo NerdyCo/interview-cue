@@ -1,9 +1,9 @@
 {
   "name": "interview-cue",
-  "productName": "interview-cue",
+  "productName": "Interview Cue",
   "version": "1.0.0",
   "private": true,
-  "description": "My Electron application description",
+  "description": "Private cue card overlay untuk presenter",
   "keywords": [],
   "license": "MIT",
   "author": {
@@ -18,7 +18,8 @@
     "release": "electron-forge release",
     "lint": "oxlint && oxfmt --check",
     "lint:fix": "oxlint --fix && oxfmt --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "icon": "node scripts/make-icon.mjs"
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",
