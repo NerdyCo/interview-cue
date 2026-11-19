@@ -1,11 +1,20 @@
 import { globalShortcut } from "electron";
-import { nextCard, prevCard, toggleMode, togglePrivate } from "./overlay";
+import {
+  nextCard,
+  panicHide,
+  prevCard,
+  toggleMode,
+  togglePrivate,
+  toggleSession,
+} from "./overlay";
 
 const BINDINGS: ReadonlyArray<readonly [string, () => void]> = [
   ["CommandOrControl+Alt+Right", nextCard],
   ["CommandOrControl+Alt+Left", prevCard],
   ["CommandOrControl+Alt+I", toggleMode],
   ["CommandOrControl+Alt+P", togglePrivate],
+  ["CommandOrControl+Alt+S", toggleSession],
+  ["F9", panicHide],
 ];
 
 export function registerHotkeys(): string[] {

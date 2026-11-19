@@ -7,16 +7,23 @@ import {
   getCueState,
   nextCard,
   openDeck,
+  panicHide,
   prevCard,
   setMode,
   toggleMode,
   togglePrivate,
+  toggleSession,
 } from "./main/overlay";
 import { registerHotkeys, unregisterHotkeys } from "./main/hotkeys";
 import { loadSettings } from "./main/store";
+import { createTray, destroyTray } from "./main/tray";
 import { IPC, type OverlayMode } from "./shared/ipc";
 
 if (started) app.quit();
+
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
 
 Menu.setApplicationMenu(null);
 
@@ -26,9 +33,16 @@ app.whenReady().then(async () => {
   const win = createCueWindow();
   attachOverlay(win);
 
+  createTray({
+    onToggleHidden: () => panicHide(),
+    onQuit: () => app.quit(),
+  });
+
   ipcMain.on(IPC.setMode, (_e, mode: OverlayMode) => setMode(mode));
   ipcMain.on(IPC.toggleMode, () => toggleMode());
   ipcMain.on(IPC.togglePrivate, () => togglePrivate());
+  ipcMain.on(IPC.toggleSession, () => toggleSession());
+  ipcMain.on(IPC.panicHide, () => panicHide());
   ipcMain.handle(IPC.ackDisclaimer, () => ackDisclaimer());
   ipcMain.handle(IPC.openDeck, () => openDeck());
   ipcMain.on(IPC.nextCard, () => nextCard());
@@ -53,7 +67,15 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on("will-quit", () => unregisterHotkeys());
+app.on("second-instance", () => {
+  const state = getCueState();
+  if (state.hidden) panicHide();
+});
+
+app.on("will-quit", () => {
+  unregisterHotkeys();
+  destroyTray();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

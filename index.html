@@ -9,11 +9,18 @@
       <header id="bar">
         <span id="mode">INTERACT</span>
         <div id="actions">
+          <button id="session" type="button">Sesi</button>
           <button id="private" type="button">Private: OFF</button>
           <button id="open" type="button">Deck</button>
           <button id="toggle" type="button">Read</button>
+          <button id="hide" type="button" title="F9">Sembunyikan</button>
         </div>
       </header>
+
+      <p id="session-banner" hidden>
+        SESI AKTIF — layar diasumsikan sedang dibagikan. Cue tidak bisa
+        mendeteksi perekaman; penanda ini dinyalakan manual.
+      </p>
 
       <div id="meta">
         <span id="deck">Belum ada deck</span>
@@ -48,6 +55,11 @@
           </li>
           <li>Dialog pilih file bawaan Windows tidak ikut dikecualikan.</li>
           <li>Remote Desktop tetap menampilkan overlay ke pengguna remote.</li>
+          <li>
+            <strong>Cue tidak bisa mendeteksi perekaman.</strong> Nyalakan
+            penanda sesi sendiri sebelum share. Border kuning Windows hanya
+            muncul pada sebagian metode capture.
+          </li>
         </ul>
         <button id="ack" type="button">Saya paham</button>
       </section>

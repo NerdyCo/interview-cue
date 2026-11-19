@@ -10,6 +10,8 @@ export interface CueState {
   privateMode: boolean;
   contentProtected: boolean;
   disclaimerAcked: boolean;
+  sessionActive: boolean;
+  hidden: boolean;
   deckName: string | null;
   cards: CueCard[];
   cardIndex: number;
@@ -20,6 +22,8 @@ export interface CueApi {
   setMode(mode: OverlayMode): void;
   toggleMode(): void;
   togglePrivate(): void;
+  toggleSession(): void;
+  panicHide(): void;
   ackDisclaimer(): void;
   openDeck(): void;
   nextCard(): void;
@@ -32,6 +36,8 @@ export const IPC = {
   setMode: "cue:set-mode",
   toggleMode: "cue:toggle-mode",
   togglePrivate: "cue:toggle-private",
+  toggleSession: "cue:toggle-session",
+  panicHide: "cue:panic-hide",
   ackDisclaimer: "cue:ack-disclaimer",
   openDeck: "cue:open-deck",
   nextCard: "cue:next-card",

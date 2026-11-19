@@ -2,12 +2,16 @@ import { BrowserWindow, dialog } from "electron";
 import { IPC, type CueState, type OverlayMode } from "../shared/ipc";
 import { loadDeck } from "./deck";
 import { getSettings, saveSettings } from "./store";
+import { hideAll, isHidden, showAll } from "./visibility";
+import { updateTray } from "./tray";
 
 const state: CueState = {
   mode: "interact",
   privateMode: false,
   contentProtected: false,
   disclaimerAcked: false,
+  sessionActive: false,
+  hidden: false,
   deckName: null,
   cards: [],
   cardIndex: 0,
@@ -40,9 +44,43 @@ export function toggleMode(): void {
 
 export function togglePrivate(): void {
   if (!state.disclaimerAcked) return;
+
+  if (state.sessionActive && state.privateMode) {
+    state.error =
+      "Private mode terkunci selama sesi aktif. Matikan penanda sesi dulu kalau memang ingin menampilkannya.";
+    applyState();
+    return;
+  }
+
   state.privateMode = !state.privateMode;
   state.error = null;
   applyState();
+}
+
+export function toggleSession(): void {
+  if (!state.disclaimerAcked) return;
+
+  state.sessionActive = !state.sessionActive;
+
+  if (state.sessionActive) {
+    state.privateMode = true;
+    state.mode = "read";
+    state.error = null;
+  }
+
+  applyState();
+}
+
+export function panicHide(): void {
+  if (isHidden()) {
+    showAll();
+    state.hidden = false;
+    applyState();
+  } else {
+    hideAll();
+    state.hidden = true;
+    updateTray(true, state.sessionActive);
+  }
 }
 
 export async function ackDisclaimer(): Promise<void> {
@@ -114,4 +152,5 @@ function applyState(): void {
 
   win.setBounds(bounds);
   win.webContents.send(IPC.state, getCueState());
+  updateTray(state.hidden, state.sessionActive);
 }
