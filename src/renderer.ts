@@ -32,6 +32,7 @@ const settingsCloseEl = el<HTMLButtonElement>("settings-close");
 
 let recording: HotkeyAction | null = null;
 let lastHotkeyJson = "";
+let lastState: CueState;
 
 function buildHotkeyRows(): void {
   hotkeyListEl.replaceChildren();
@@ -49,6 +50,7 @@ function buildHotkeyRows(): void {
     btn.dataset.action = action;
     btn.addEventListener("click", () => {
       recording = action;
+      lastHotkeyJson = "";
       renderHotkeys(lastState);
     });
 
@@ -66,15 +68,27 @@ function renderHotkeys(s: CueState): void {
     ".hk-key",
   )) {
     const action = btn.dataset.action as HotkeyAction;
-    const conflict = s.hotkeyConflicts.includes(action);
-    btn.classList.toggle("conflict", conflict);
+    btn.classList.toggle("conflict", s.hotkeyConflicts.includes(action));
     btn.classList.toggle("recording", recording === action);
     btn.textContent =
       recording === action ? "Tekan tombol…" : s.hotkeys[action];
   }
 }
 
-let lastState: CueState;
+/**
+ * Tombol berikon TIDAK boleh diset textContent — itu menghapus SVG-nya.
+ * Status cukup lewat class + title.
+ */
+function setIconState(
+  btn: HTMLButtonElement,
+  on: boolean,
+  labelOn: string,
+  labelOff: string,
+): void {
+  btn.classList.toggle("on", on);
+  btn.title = on ? labelOn : labelOff;
+  btn.setAttribute("aria-pressed", String(on));
+}
 
 function render(s: CueState): void {
   lastState = s;
@@ -86,24 +100,41 @@ function render(s: CueState): void {
   document.body.classList.toggle("needs-ack", !s.disclaimerAcked);
   document.body.classList.toggle("show-settings", s.settingsOpen);
 
+  // Teks yang memang diwajibkan PRD tetap teks.
   modeEl.textContent = isRead ? "READ" : "INTERACT";
-  toggleEl.textContent = isRead ? "Interact" : "Read";
 
-  privateEl.textContent = s.privateMode ? "Private: ON" : "Private: OFF";
+  setIconState(
+    toggleEl,
+    !isRead,
+    "Mode interact — klik untuk jadikan click-through",
+    "Mode baca (click-through) — klik untuk bisa scroll",
+  );
+  setIconState(
+    privateEl,
+    s.privateMode,
+    "Private: ON — dikecualikan dari capture",
+    "Private: OFF — terlihat di screen share",
+  );
+  setIconState(
+    sessionEl,
+    s.sessionActive,
+    "Sesi aktif — klik untuk matikan penanda",
+    "Tandai sedang presentasi/share",
+  );
+
   privateEl.disabled = !s.disclaimerAcked;
-
-  sessionEl.textContent = s.sessionActive ? "Sesi: ON" : "Sesi";
   sessionEl.disabled = !s.disclaimerAcked;
+  settingsEl.classList.toggle("on", s.settingsOpen);
 
   bannerEl.hidden = !s.sessionActive;
   settingsPanelEl.hidden = !s.settingsOpen;
+  disclaimerEl.hidden = s.disclaimerAcked;
 
   osStatusEl.textContent = s.contentProtected ? "OS: excluded" : "OS: visible";
   osStatusEl.classList.toggle("mismatch", s.privateMode !== s.contentProtected);
 
-  disclaimerEl.hidden = s.disclaimerAcked;
-
   deckEl.textContent = s.deckName ?? "Belum ada deck";
+  deckEl.title = s.deckName ?? "";
   errorEl.textContent = s.error ?? "";
   errorEl.hidden = s.error === null;
 
@@ -119,6 +150,8 @@ function render(s: CueState): void {
 
   counterEl.textContent = `${s.cardIndex + 1}/${s.cards.length}`;
   titleEl.textContent = card.title;
+
+  // marked tidak membersihkan HTML. Langkah ini wajib.
   bodyEl.innerHTML = DOMPurify.sanitize(card.html, {
     USE_PROFILES: { html: true },
   });
@@ -156,7 +189,9 @@ sessionEl.addEventListener("click", () => window.cue.toggleSession());
 hideEl.addEventListener("click", () => window.cue.panicHide());
 openEl.addEventListener("click", () => window.cue.openDeck());
 ackEl.addEventListener("click", () => window.cue.ackDisclaimer());
-settingsEl.addEventListener("click", () => window.cue.setSettingsOpen(true));
+settingsEl.addEventListener("click", () =>
+  window.cue.setSettingsOpen(!lastState.settingsOpen),
+);
 settingsCloseEl.addEventListener("click", () => {
   recording = null;
   window.cue.setSettingsOpen(false);
