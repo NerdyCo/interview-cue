@@ -9,7 +9,8 @@
       <header id="bar">
         <span id="mode">INTERACT</span>
         <div id="actions">
-          <button id="open" type="button">Buka deck</button>
+          <button id="private" type="button">Private: OFF</button>
+          <button id="open" type="button">Deck</button>
           <button id="toggle" type="button">Read</button>
         </div>
       </header>
@@ -17,6 +18,7 @@
       <div id="meta">
         <span id="deck">Belum ada deck</span>
         <span id="counter"></span>
+        <span id="os-status">OS: visible</span>
       </div>
 
       <p id="error" hidden></p>
@@ -25,6 +27,30 @@
         <h2 id="card-title"></h2>
         <div id="card-body"></div>
       </main>
+
+      <section id="disclaimer" hidden>
+        <h2>Sebelum memakai private overlay</h2>
+        <ul>
+          <li>
+            Ini <strong>permintaan ke Windows</strong>, bukan jaminan. Jangan
+            menganggapnya 100% tidak terlihat.
+          </li>
+          <li>
+            Aplikasi meeting modern umumnya menghormatinya. Jalur capture lama
+            belum tentu.
+          </li>
+          <li>
+            Pengaturan capture di aplikasi meeting bisa mengubah hasilnya.
+          </li>
+          <li>
+            Aktifkan <strong>sebelum</strong> mulai share. Perubahan berlaku
+            pada frame berikutnya, bukan seketika.
+          </li>
+          <li>Dialog pilih file bawaan Windows tidak ikut dikecualikan.</li>
+          <li>Remote Desktop tetap menampilkan overlay ke pengguna remote.</li>
+        </ul>
+        <button id="ack" type="button">Saya paham</button>
+      </section>
     </div>
     <script type="module" src="/src/renderer.ts"></script>
   </body>

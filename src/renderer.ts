@@ -5,21 +5,35 @@ import { el } from "./renderer/dom";
 
 const modeEl = el("mode");
 const toggleEl = el<HTMLButtonElement>("toggle");
+const privateEl = el<HTMLButtonElement>("private");
 const openEl = el<HTMLButtonElement>("open");
 const deckEl = el("deck");
 const counterEl = el("counter");
+const osStatusEl = el("os-status");
 const titleEl = el("card-title");
 const bodyEl = el("card-body");
 const errorEl = el("error");
+const disclaimerEl = el("disclaimer");
+const ackEl = el<HTMLButtonElement>("ack");
 
 function render(s: CueState): void {
   const isRead = s.mode === "read";
   document.body.classList.toggle("read", isRead);
+  document.body.classList.toggle("private", s.privateMode);
+  document.body.classList.toggle("needs-ack", !s.disclaimerAcked);
+
   modeEl.textContent = isRead ? "READ" : "INTERACT";
   toggleEl.textContent = isRead ? "Interact" : "Read";
 
-  deckEl.textContent = s.deckName ?? "Belum ada deck";
+  privateEl.textContent = s.privateMode ? "Private: ON" : "Private: OFF";
+  privateEl.disabled = !s.disclaimerAcked;
 
+  osStatusEl.textContent = s.contentProtected ? "OS: excluded" : "OS: visible";
+  osStatusEl.classList.toggle("mismatch", s.privateMode !== s.contentProtected);
+
+  disclaimerEl.hidden = s.disclaimerAcked;
+
+  deckEl.textContent = s.deckName ?? "Belum ada deck";
   errorEl.textContent = s.error ?? "";
   errorEl.hidden = s.error === null;
 
@@ -31,16 +45,19 @@ function render(s: CueState): void {
     return;
   }
 
-  counterEl.textContent = `Kartu ${s.cardIndex + 1} dari ${s.cards.length}`;
+  counterEl.textContent = `${s.cardIndex + 1}/${s.cards.length}`;
   titleEl.textContent = card.title;
 
-  const clean = DOMPurify.sanitize(card.html, { USE_PROFILES: { html: true } });
-  bodyEl.innerHTML = clean;
+  bodyEl.innerHTML = DOMPurify.sanitize(card.html, {
+    USE_PROFILES: { html: true },
+  });
   bodyEl.scrollTop = 0;
 }
 
 toggleEl.addEventListener("click", () => window.cue.toggleMode());
+privateEl.addEventListener("click", () => window.cue.togglePrivate());
 openEl.addEventListener("click", () => window.cue.openDeck());
+ackEl.addEventListener("click", () => window.cue.ackDisclaimer());
 
 window.cue.onState(render);
 window.cue.getState().then(render);

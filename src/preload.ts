@@ -4,6 +4,8 @@ import { IPC, type CueApi, type CueState } from "./shared/ipc";
 contextBridge.exposeInMainWorld("cue", {
   setMode: (mode) => ipcRenderer.send(IPC.setMode, mode),
   toggleMode: () => ipcRenderer.send(IPC.toggleMode),
+  togglePrivate: () => ipcRenderer.send(IPC.togglePrivate),
+  ackDisclaimer: () => ipcRenderer.invoke(IPC.ackDisclaimer),
   openDeck: () => ipcRenderer.invoke(IPC.openDeck),
   nextCard: () => ipcRenderer.send(IPC.nextCard),
   prevCard: () => ipcRenderer.send(IPC.prevCard),

@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import started from "electron-squirrel-startup";
 import { createCueWindow } from "./main/windows";
 import {
+  ackDisclaimer,
   attachOverlay,
   getCueState,
   nextCard,
@@ -9,23 +10,29 @@ import {
   prevCard,
   setMode,
   toggleMode,
+  togglePrivate,
 } from "./main/overlay";
 import { registerHotkeys, unregisterHotkeys } from "./main/hotkeys";
+import { loadSettings } from "./main/store";
 import { IPC, type OverlayMode } from "./shared/ipc";
 
 if (started) app.quit();
 
 Menu.setApplicationMenu(null);
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await loadSettings();
+
   const win = createCueWindow();
   attachOverlay(win);
 
   ipcMain.on(IPC.setMode, (_e, mode: OverlayMode) => setMode(mode));
   ipcMain.on(IPC.toggleMode, () => toggleMode());
+  ipcMain.on(IPC.togglePrivate, () => togglePrivate());
+  ipcMain.handle(IPC.ackDisclaimer, () => ackDisclaimer());
+  ipcMain.handle(IPC.openDeck, () => openDeck());
   ipcMain.on(IPC.nextCard, () => nextCard());
   ipcMain.on(IPC.prevCard, () => prevCard());
-  ipcMain.handle(IPC.openDeck, () => openDeck());
   ipcMain.handle(IPC.getState, () => getCueState());
 
   const failed = registerHotkeys();

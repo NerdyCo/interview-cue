@@ -1,10 +1,13 @@
 import { BrowserWindow, dialog } from "electron";
 import { IPC, type CueState, type OverlayMode } from "../shared/ipc";
 import { loadDeck } from "./deck";
+import { getSettings, saveSettings } from "./store";
 
 const state: CueState = {
   mode: "interact",
   privateMode: false,
+  contentProtected: false,
+  disclaimerAcked: false,
   deckName: null,
   cards: [],
   cardIndex: 0,
@@ -15,6 +18,7 @@ let win: BrowserWindow | null = null;
 
 export function attachOverlay(window: BrowserWindow): void {
   win = window;
+  state.disclaimerAcked = getSettings().disclaimerAcked;
   applyState();
   window.on("closed", () => {
     win = null;
@@ -32,6 +36,19 @@ export function setMode(mode: OverlayMode): void {
 
 export function toggleMode(): void {
   setMode(state.mode === "read" ? "interact" : "read");
+}
+
+export function togglePrivate(): void {
+  if (!state.disclaimerAcked) return;
+  state.privateMode = !state.privateMode;
+  state.error = null;
+  applyState();
+}
+
+export async function ackDisclaimer(): Promise<void> {
+  state.disclaimerAcked = true;
+  await saveSettings({ disclaimerAcked: true });
+  applyState();
 }
 
 export function nextCard(): void {
@@ -52,6 +69,13 @@ function goToCard(index: number): void {
 
 export async function openDeck(): Promise<void> {
   if (!win || win.isDestroyed()) return;
+
+  if (state.privateMode) {
+    state.error =
+      "Matikan private mode dulu untuk memilih deck. Dialog file bawaan Windows tidak ikut dikecualikan dari screen share.";
+    applyState();
+    return;
+  }
 
   const result = await dialog.showOpenDialog(win, {
     title: "Pilih deck catatan",
@@ -84,6 +108,9 @@ function applyState(): void {
   } else {
     win.setIgnoreMouseEvents(false);
   }
+
+  win.setContentProtection(state.privateMode);
+  state.contentProtected = win.isContentProtected();
 
   win.setBounds(bounds);
   win.webContents.send(IPC.state, getCueState());
