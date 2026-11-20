@@ -16,6 +16,10 @@ const sessionEl = el<HTMLButtonElement>("session");
 const hideEl = el<HTMLButtonElement>("hide");
 const openEl = el<HTMLButtonElement>("open");
 const settingsEl = el<HTMLButtonElement>("settings");
+const gripEl = el<HTMLButtonElement>("grip");
+const collapseEl = el<HTMLButtonElement>("collapse");
+const clockEl = el("clock");
+const sessionDotEl = el("session-dot");
 const deckEl = el("deck");
 const counterEl = el("counter");
 const osStatusEl = el("os-status");
@@ -29,10 +33,12 @@ const settingsPanelEl = el("settings-panel");
 const hotkeyListEl = el("hotkey-list");
 const hotkeyResetEl = el<HTMLButtonElement>("hotkey-reset");
 const settingsCloseEl = el<HTMLButtonElement>("settings-close");
+const bodyWrapperEl = el("body-wrapper");
 
 let recording: HotkeyAction | null = null;
 let lastHotkeyJson = "";
 let lastState: CueState;
+let isBodyVisible = false;
 
 function buildHotkeyRows(): void {
   hotkeyListEl.replaceChildren();
@@ -77,7 +83,7 @@ function renderHotkeys(s: CueState): void {
 
 /**
  * Tombol berikon TIDAK boleh diset textContent — itu menghapus SVG-nya.
- * Status cukup lewat class + title.
+ * Untuk .tb-btn (ikon + label), update hanya span label-nya.
  */
 function setIconState(
   btn: HTMLButtonElement,
@@ -90,6 +96,21 @@ function setIconState(
   btn.setAttribute("aria-pressed", String(on));
 }
 
+function setBodyVisible(visible: boolean): void {
+  isBodyVisible = visible;
+  bodyWrapperEl.hidden = !visible;
+  document.body.classList.toggle("show-body", visible);
+  collapseEl.setAttribute("aria-expanded", String(visible));
+  collapseEl.title = visible ? "Tutup kartu" : "Buka kartu";
+}
+
+function tickClock(): void {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  clockEl.textContent = `${hh}:${mm}`;
+}
+
 function render(s: CueState): void {
   lastState = s;
 
@@ -100,7 +121,9 @@ function render(s: CueState): void {
   document.body.classList.toggle("needs-ack", !s.disclaimerAcked);
   document.body.classList.toggle("show-settings", s.settingsOpen);
 
-  // Teks yang memang diwajibkan PRD tetap teks.
+  // Error penting (mis. hotkey bentrok) harus langsung terlihat.
+  if (s.error && !isBodyVisible) setBodyVisible(true);
+
   modeEl.textContent = isRead ? "READ" : "INTERACT";
 
   setIconState(
@@ -109,6 +132,9 @@ function render(s: CueState): void {
     "Mode interact — klik untuk jadikan click-through",
     "Mode baca (click-through) — klik untuk bisa scroll",
   );
+  const toggleLabel = toggleEl.querySelector("span");
+  if (toggleLabel) toggleLabel.textContent = isRead ? "Read" : "Interact";
+
   setIconState(
     privateEl,
     s.privateMode,
@@ -121,6 +147,10 @@ function render(s: CueState): void {
     "Sesi aktif — klik untuk matikan penanda",
     "Tandai sedang presentasi/share",
   );
+
+  sessionDotEl.title = s.sessionActive
+    ? "SESI AKTIF — layar diasumsikan dibagikan"
+    : "Penanda sesi mati";
 
   privateEl.disabled = !s.disclaimerAcked;
   sessionEl.disabled = !s.disclaimerAcked;
@@ -158,6 +188,11 @@ function render(s: CueState): void {
   bodyEl.scrollTop = 0;
 }
 
+// Buka/tutup kartu: chevron atau klik logo grip.
+// Drag window tetap lewat grip (app-region: drag); klik pendek = toggle.
+collapseEl.addEventListener("click", () => setBodyVisible(!isBodyVisible));
+gripEl.addEventListener("click", () => setBodyVisible(!isBodyVisible));
+
 window.addEventListener(
   "keydown",
   (e) => {
@@ -187,7 +222,10 @@ toggleEl.addEventListener("click", () => window.cue.toggleMode());
 privateEl.addEventListener("click", () => window.cue.togglePrivate());
 sessionEl.addEventListener("click", () => window.cue.toggleSession());
 hideEl.addEventListener("click", () => window.cue.panicHide());
-openEl.addEventListener("click", () => window.cue.openDeck());
+openEl.addEventListener("click", () => {
+  setBodyVisible(true);
+  void window.cue.openDeck();
+});
 ackEl.addEventListener("click", () => window.cue.ackDisclaimer());
 settingsEl.addEventListener("click", () =>
   window.cue.setSettingsOpen(!lastState.settingsOpen),
@@ -202,5 +240,7 @@ hotkeyResetEl.addEventListener("click", () => {
 });
 
 buildHotkeyRows();
+tickClock();
+setInterval(tickClock, 10_000);
 window.cue.onState(render);
 window.cue.getState().then(render);

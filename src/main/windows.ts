@@ -3,9 +3,9 @@ import path from "node:path";
 
 export function createCueWindow(): BrowserWindow {
   const win = new BrowserWindow({
-    width: 420,
-    height: 260,
-    minWidth: 260,
+    width: 720,
+    height: 460,
+    minWidth: 420,
     minHeight: 120,
 
     frame: false,

@@ -6,8 +6,64 @@
   </head>
   <body>
     <div id="panel">
+      <!-- TOOLBAR: satu baris horizontal, selalu tampil -->
       <header id="bar">
+        <button
+          id="grip"
+          type="button"
+          title="Geser untuk memindah — klik untuk buka/tutup kartu"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="11" height="11" rx="3" />
+            <path d="M6 6.4h4M6 9.6h4" />
+          </svg>
+        </button>
+
+        <div class="sep"></div>
+
         <div id="actions">
+          <button id="open" class="tb-btn" type="button" title="Buka deck">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M2.4 4.6A1.2 1.2 0 0 1 3.6 3.4h2.2l1.2 1.5h5.4a1.2 1.2 0 0 1 1.2 1.2v5.3a1.2 1.2 0 0 1-1.2 1.2H3.6a1.2 1.2 0 0 1-1.2-1.2Z"
+              />
+            </svg>
+            <span>Deck</span>
+          </button>
+
+          <button
+            id="web"
+            class="tb-btn"
+            type="button"
+            title="Mode web private"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M2 8h12" />
+              <path d="M8 2c1.7 1.7 2.5 3.7 2.5 6S9.7 12.3 8 14" />
+              <path d="M8 2C6.3 3.7 5.5 5.7 5.5 8s.8 4.3 2.5 6" />
+            </svg>
+            <span>Web</span>
+          </button>
+
+          <button
+            id="toggle"
+            class="tb-btn"
+            type="button"
+            title="Toggle interact"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M2.2 8S4.4 4.3 8 4.3 13.8 8 13.8 8 11.6 11.7 8 11.7 2.2 8 2.2 8Z"
+              />
+              <circle cx="8" cy="8" r="1.7" />
+              <path class="slash" d="M3.2 3.2 12.8 12.8" />
+            </svg>
+            <span>Interact</span>
+          </button>
+
+          <div class="sep"></div>
+
           <button
             id="session"
             class="icon-btn"
@@ -34,29 +90,6 @@
             </svg>
           </button>
 
-          <button id="open" class="icon-btn" type="button" title="Buka deck">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M2.4 4.6A1.2 1.2 0 0 1 3.6 3.4h2.2l1.2 1.5h5.4a1.2 1.2 0 0 1 1.2 1.2v5.3a1.2 1.2 0 0 1-1.2 1.2H3.6a1.2 1.2 0 0 1-1.2-1.2Z"
-              />
-            </svg>
-          </button>
-
-          <button
-            id="toggle"
-            class="icon-btn"
-            type="button"
-            title="Toggle interact"
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M2.2 8S4.4 4.3 8 4.3 13.8 8 13.8 8 11.6 11.7 8 11.7 2.2 8 2.2 8Z"
-              />
-              <circle cx="8" cy="8" r="1.7" />
-              <path class="slash" d="M3.2 3.2 12.8 12.8" />
-            </svg>
-          </button>
-
           <button
             id="settings"
             class="icon-btn"
@@ -68,6 +101,24 @@
               <circle cx="8" cy="8" r="2.3" />
             </svg>
           </button>
+        </div>
+
+        <div class="sep"></div>
+
+        <div id="status">
+          <button
+            id="collapse"
+            class="icon-btn"
+            type="button"
+            title="Buka kartu"
+            aria-expanded="false"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M4.5 9.8 8 6.3l3.5 3.5" />
+            </svg>
+          </button>
+          <span id="clock">--:--</span>
+          <span id="session-dot" title="Penanda sesi mati"></span>
         </div>
 
         <button
@@ -82,27 +133,83 @@
         </button>
       </header>
 
-      <div id="meta">
-        <span id="mode">INTERACT</span>
-        <span id="deck">Belum ada deck</span>
-        <span id="right-meta">
-          <span id="counter"></span>
-          <span id="os-status">OS: visible</span>
-        </span>
+      <!-- BODY: floating card terpisah, hidden by default -->
+      <div id="body-wrapper" hidden>
+        <div id="meta">
+          <span id="mode">INTERACT</span>
+          <span id="deck">Belum ada deck</span>
+          <span id="right-meta">
+            <span id="counter"></span>
+            <span id="os-status">OS: visible</span>
+          </span>
+        </div>
+
+        <p id="session-banner" hidden>
+          Sesi aktif — layar diasumsikan dibagikan. Cue tidak mendeteksi
+          perekaman.
+        </p>
+
+        <p id="error" hidden></p>
+
+        <main id="body">
+          <h2 id="card-title"></h2>
+          <div id="card-body"></div>
+        </main>
       </div>
 
-      <p id="session-banner" hidden>
-        Sesi aktif — layar diasumsikan dibagikan. Cue tidak mendeteksi
-        perekaman.
-      </p>
+      <!-- WEB PANEL -->
+      <section id="web-panel" hidden>
+        <div id="web-toolbar">
+          <button id="web-back" class="icon-btn" type="button" title="Back">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M9.8 3.8 5.6 8l4.2 4.2" />
+            </svg>
+          </button>
+          <button
+            id="web-forward"
+            class="icon-btn"
+            type="button"
+            title="Forward"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M6.2 3.8 10.4 8l-4.2 4.2" />
+            </svg>
+          </button>
+          <button id="web-reload" class="icon-btn" type="button" title="Reload">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M12.5 6.2A4.8 4.8 0 1 0 13 9" />
+              <path d="M12.5 2.8v3.4H9.1" />
+            </svg>
+          </button>
+          <input
+            id="web-url"
+            type="text"
+            placeholder="Ketik URL atau kata cari, lalu Enter"
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <button
+            id="web-close"
+            class="icon-btn danger"
+            type="button"
+            title="Tutup web"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M4.4 4.4 11.6 11.6M11.6 4.4 4.4 11.6" />
+            </svg>
+          </button>
+        </div>
+        <p id="web-status">
+          Private web aktif. Pastikan status menunjukkan OS: excluded.
+        </p>
+        <webview
+          id="research-webview"
+          partition="persist:cue-research"
+          src="about:blank"
+        ></webview>
+      </section>
 
-      <p id="error" hidden></p>
-
-      <main id="body">
-        <h2 id="card-title"></h2>
-        <div id="card-body"></div>
-      </main>
-
+      <!-- SETTINGS -->
       <section id="settings-panel" hidden>
         <h2>Hotkey</h2>
         <p class="hint">
@@ -116,6 +223,7 @@
         </div>
       </section>
 
+      <!-- DISCLAIMER -->
       <section id="disclaimer" hidden>
         <h2>Sebelum memakai private overlay</h2>
         <ul>
@@ -144,6 +252,7 @@
         <button id="ack" type="button">Saya paham</button>
       </section>
     </div>
+
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>
