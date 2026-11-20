@@ -16,6 +16,7 @@ import {
   resetHotkeys,
   setMode,
   setSettingsOpen,
+  toggleChat,
   toggleMode,
   togglePrivate,
   toggleSession,
@@ -59,6 +60,7 @@ app.whenReady().then(async () => {
   ipcMain.on(IPC.toggleMode, () => toggleMode());
   ipcMain.on(IPC.togglePrivate, () => togglePrivate());
   ipcMain.on(IPC.toggleSession, () => toggleSession());
+  ipcMain.on(IPC.toggleChat, () => toggleChat());
   ipcMain.on(IPC.panicHide, () => panicHide());
   ipcMain.on(IPC.setSettingsOpen, (_e, open: boolean) => setSettingsOpen(open));
   ipcMain.handle(IPC.ackDisclaimer, () => ackDisclaimer());

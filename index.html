@@ -6,7 +6,7 @@
   </head>
   <body>
     <div id="panel">
-      <!-- TOOLBAR: satu baris horizontal, selalu tampil -->
+      <!-- TOOLBAR -->
       <header id="bar">
         <button
           id="grip"
@@ -32,18 +32,18 @@
           </button>
 
           <button
-            id="web"
+            id="chat"
             class="tb-btn"
             type="button"
-            title="Mode web private"
+            title="AI Assistant Chat"
           >
             <svg viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="8" cy="8" r="6" />
-              <path d="M2 8h12" />
-              <path d="M8 2c1.7 1.7 2.5 3.7 2.5 6S9.7 12.3 8 14" />
-              <path d="M8 2C6.3 3.7 5.5 5.7 5.5 8s.8 4.3 2.5 6" />
+              <path
+                d="M2.5 3.5A1.5 1.5 0 0 1 4 2h8a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 12 11H5l-2.5 2.5V3.5Z"
+              />
+              <path d="M5.5 5.5h5M5.5 8h3" stroke-linecap="round" />
             </svg>
-            <span>Web</span>
+            <span>Chat</span>
           </button>
 
           <button
@@ -133,7 +133,7 @@
         </button>
       </header>
 
-      <!-- BODY: floating card terpisah, hidden by default -->
+      <!-- BODY: floating card terpisah -->
       <div id="body-wrapper" hidden>
         <div id="meta">
           <span id="mode">INTERACT</span>
@@ -157,56 +157,54 @@
         </main>
       </div>
 
-      <!-- WEB PANEL -->
-      <section id="web-panel" hidden>
-        <div id="web-toolbar">
-          <button id="web-back" class="icon-btn" type="button" title="Back">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M9.8 3.8 5.6 8l4.2 4.2" />
-            </svg>
-          </button>
+      <!-- CHAT PANEL -->
+      <section id="chat-panel" hidden>
+        <div id="chat-header">
+          <span id="chat-title">AI Assistant</span>
+          <span id="chat-status">Online</span>
           <button
-            id="web-forward"
+            id="chat-close"
             class="icon-btn"
             type="button"
-            title="Forward"
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M6.2 3.8 10.4 8l-4.2 4.2" />
-            </svg>
-          </button>
-          <button id="web-reload" class="icon-btn" type="button" title="Reload">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M12.5 6.2A4.8 4.8 0 1 0 13 9" />
-              <path d="M12.5 2.8v3.4H9.1" />
-            </svg>
-          </button>
-          <input
-            id="web-url"
-            type="text"
-            placeholder="Ketik URL atau kata cari, lalu Enter"
-            spellcheck="false"
-            autocomplete="off"
-          />
-          <button
-            id="web-close"
-            class="icon-btn danger"
-            type="button"
-            title="Tutup web"
+            title="Tutup chat"
           >
             <svg viewBox="0 0 16 16" aria-hidden="true">
               <path d="M4.4 4.4 11.6 11.6M11.6 4.4 4.4 11.6" />
             </svg>
           </button>
         </div>
-        <p id="web-status">
-          Private web aktif. Pastikan status menunjukkan OS: excluded.
-        </p>
-        <webview
-          id="research-webview"
-          partition="persist:cue-research"
-          src="about:blank"
-        ></webview>
+        <div id="chat-body">
+          <div class="chat-empty">
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
+                d="M2.5 3.5A1.5 1.5 0 0 1 4 2h8a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 12 11H5l-2.5 2.5V3.5Z"
+              />
+            </svg>
+            <p>
+              AI Assistant siap membantu.<br />Mulai ketik pertanyaanmu di
+              bawah.
+            </p>
+          </div>
+        </div>
+        <div id="chat-input-area">
+          <input
+            id="chat-input"
+            type="text"
+            placeholder="Tanya AI tentang materi presentasi..."
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <button id="chat-send" type="button" title="Kirim">
+            <svg viewBox="0 0 16 16">
+              <path d="M2.5 8h11M9.5 4l4 4-4 4" />
+            </svg>
+          </button>
+        </div>
       </section>
 
       <!-- SETTINGS -->

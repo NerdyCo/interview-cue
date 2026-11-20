@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld("cue", {
   toggleSession: () => ipcRenderer.send(IPC.toggleSession),
   panicHide: () => ipcRenderer.send(IPC.panicHide),
   setSettingsOpen: (open) => ipcRenderer.send(IPC.setSettingsOpen, open),
+  toggleChat: () => ipcRenderer.send(IPC.toggleChat),
   ackDisclaimer: () => ipcRenderer.invoke(IPC.ackDisclaimer),
   openDeck: () => ipcRenderer.invoke(IPC.openDeck),
   nextCard: () => ipcRenderer.send(IPC.nextCard),

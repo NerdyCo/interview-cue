@@ -15,6 +15,7 @@ const privateEl = el<HTMLButtonElement>("private");
 const sessionEl = el<HTMLButtonElement>("session");
 const hideEl = el<HTMLButtonElement>("hide");
 const openEl = el<HTMLButtonElement>("open");
+const chatBtnEl = el<HTMLButtonElement>("chat");
 const settingsEl = el<HTMLButtonElement>("settings");
 const gripEl = el<HTMLButtonElement>("grip");
 const collapseEl = el<HTMLButtonElement>("collapse");
@@ -34,6 +35,8 @@ const hotkeyListEl = el("hotkey-list");
 const hotkeyResetEl = el<HTMLButtonElement>("hotkey-reset");
 const settingsCloseEl = el<HTMLButtonElement>("settings-close");
 const bodyWrapperEl = el("body-wrapper");
+const chatPanelEl = el("chat-panel");
+const chatCloseEl = el<HTMLButtonElement>("chat-close");
 
 let recording: HotkeyAction | null = null;
 let lastHotkeyJson = "";
@@ -115,14 +118,16 @@ function render(s: CueState): void {
   lastState = s;
 
   const isRead = s.mode === "read";
+  const isChatOpen = s.chatOpen;
+
   document.body.classList.toggle("read", isRead);
   document.body.classList.toggle("private", s.privateMode);
   document.body.classList.toggle("session", s.sessionActive);
   document.body.classList.toggle("needs-ack", !s.disclaimerAcked);
   document.body.classList.toggle("show-settings", s.settingsOpen);
+  document.body.classList.toggle("show-chat", isChatOpen);
 
-  // Error penting (mis. hotkey bentrok) harus langsung terlihat.
-  if (s.error && !isBodyVisible) setBodyVisible(true);
+  if (s.error && !isBodyVisible && !isChatOpen) setBodyVisible(true);
 
   modeEl.textContent = isRead ? "READ" : "INTERACT";
 
@@ -135,6 +140,12 @@ function render(s: CueState): void {
   const toggleLabel = toggleEl.querySelector("span");
   if (toggleLabel) toggleLabel.textContent = isRead ? "Read" : "Interact";
 
+  setIconState(
+    chatBtnEl,
+    isChatOpen,
+    "Tutup AI Chat",
+    "Buka AI Chat Assistant",
+  );
   setIconState(
     privateEl,
     s.privateMode,
@@ -159,6 +170,7 @@ function render(s: CueState): void {
   bannerEl.hidden = !s.sessionActive;
   settingsPanelEl.hidden = !s.settingsOpen;
   disclaimerEl.hidden = s.disclaimerAcked;
+  chatPanelEl.hidden = !isChatOpen;
 
   osStatusEl.textContent = s.contentProtected ? "OS: excluded" : "OS: visible";
   osStatusEl.classList.toggle("mismatch", s.privateMode !== s.contentProtected);
@@ -171,27 +183,31 @@ function render(s: CueState): void {
   renderHotkeys(s);
 
   const card = s.cards[s.cardIndex];
-  if (!card) {
+
+  if (card && !isChatOpen && !s.settingsOpen && s.disclaimerAcked) {
+    if (!isBodyVisible) setBodyVisible(true);
+
+    counterEl.textContent = `${s.cardIndex + 1}/${s.cards.length}`;
+    titleEl.textContent = card.title;
+    bodyEl.innerHTML = DOMPurify.sanitize(card.html, {
+      USE_PROFILES: { html: true },
+    });
+    bodyEl.scrollTop = 0;
+  } else {
     counterEl.textContent = "";
     titleEl.textContent = "";
     bodyEl.replaceChildren();
-    return;
   }
-
-  counterEl.textContent = `${s.cardIndex + 1}/${s.cards.length}`;
-  titleEl.textContent = card.title;
-
-  // marked tidak membersihkan HTML. Langkah ini wajib.
-  bodyEl.innerHTML = DOMPurify.sanitize(card.html, {
-    USE_PROFILES: { html: true },
-  });
-  bodyEl.scrollTop = 0;
 }
 
-// Buka/tutup kartu: chevron atau klik logo grip.
-// Drag window tetap lewat grip (app-region: drag); klik pendek = toggle.
-collapseEl.addEventListener("click", () => setBodyVisible(!isBodyVisible));
-gripEl.addEventListener("click", () => setBodyVisible(!isBodyVisible));
+collapseEl.addEventListener("click", () => {
+  if (lastState?.chatOpen) window.cue.toggleChat();
+  else setBodyVisible(!isBodyVisible);
+});
+gripEl.addEventListener("click", () => {
+  if (lastState?.chatOpen) window.cue.toggleChat();
+  else setBodyVisible(!isBodyVisible);
+});
 
 window.addEventListener(
   "keydown",
@@ -219,6 +235,8 @@ window.addEventListener(
 );
 
 toggleEl.addEventListener("click", () => window.cue.toggleMode());
+chatBtnEl.addEventListener("click", () => window.cue.toggleChat());
+chatCloseEl.addEventListener("click", () => window.cue.toggleChat());
 privateEl.addEventListener("click", () => window.cue.togglePrivate());
 sessionEl.addEventListener("click", () => window.cue.toggleSession());
 hideEl.addEventListener("click", () => window.cue.panicHide());

@@ -35,6 +35,7 @@ const state: CueState = {
   hotkeys: { ...DEFAULT_HOTKEYS },
   hotkeyConflicts: [],
   settingsOpen: false,
+  chatOpen: false,
 };
 
 let win: BrowserWindow | null = null;
@@ -118,6 +119,18 @@ export function toggleSession(): void {
   applyState();
 }
 
+export function toggleChat(): void {
+  state.chatOpen = !state.chatOpen;
+
+  // Chat butuh interaksi mouse & keyboard
+  if (state.chatOpen) {
+    state.mode = "interact";
+    state.settingsOpen = false;
+  }
+
+  applyState();
+}
+
 export function panicHide(): void {
   if (isHidden()) {
     showAll();
@@ -155,7 +168,10 @@ function goToCard(index: number): void {
 export function setSettingsOpen(open: boolean): void {
   state.settingsOpen = open;
 
-  if (open) state.mode = "interact";
+  if (open) {
+    state.mode = "interact";
+    state.chatOpen = false;
+  }
   applyState();
 }
 

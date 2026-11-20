@@ -47,6 +47,7 @@ export interface CueState {
   hotkeys: HotkeyMap;
   hotkeyConflicts: HotkeyAction[];
   settingsOpen: boolean;
+  chatOpen: boolean;
 }
 
 export interface CueApi {
@@ -60,6 +61,7 @@ export interface CueApi {
   nextCard(): void;
   prevCard(): void;
   setSettingsOpen(open: boolean): void;
+  toggleChat(): void;
   rebindHotkey(
     action: HotkeyAction,
     accelerator: string,
@@ -80,6 +82,7 @@ export const IPC = {
   nextCard: "cue:next-card",
   prevCard: "cue:prev-card",
   setSettingsOpen: "cue:set-settings-open",
+  toggleChat: "cue:toggle-chat",
   rebindHotkey: "cue:rebind-hotkey",
   resetHotkeys: "cue:reset-hotkeys",
   getState: "cue:get-state",
