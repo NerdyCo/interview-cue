@@ -201,7 +201,8 @@
           </button>
         </div>
         <div id="chat-body">
-          <div class="chat-empty">
+          <div id="chat-messages"></div>
+          <div id="chat-empty" class="chat-empty">
             <svg
               viewBox="0 0 16 16"
               fill="none"
@@ -239,6 +240,17 @@
           hanya F1–F12 yang diizinkan. Esc untuk batal.
         </p>
         <div id="hotkey-list"></div>
+        <h2>Gemini API</h2>
+        <p class="hint">
+          API key dari Google AI Studio (gratis). Disimpan lokal di main
+          process. Alternatif: set environment variable
+          <code>GEMINI_API_KEY</code>.
+        </p>
+        <div class="row">
+          <input id="api-key-input" type="password" placeholder="AIza..." />
+          <button id="api-key-save" type="button">Simpan</button>
+        </div>
+        <p id="api-key-status" class="hint"></p>
         <div class="row">
           <button id="hotkey-reset" type="button">Default</button>
           <button id="settings-close" type="button">Tutup</button>

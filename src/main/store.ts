@@ -29,6 +29,7 @@ export interface Settings {
   lastDeckPath: string | null;
   hotkeys: HotkeyMap;
   timerMinutes: number;
+  geminiApiKey: string;
 }
 
 const DEFAULTS: Settings = {
@@ -37,6 +38,7 @@ const DEFAULTS: Settings = {
   lastDeckPath: null,
   hotkeys: { ...DEFAULT_HOTKEYS },
   timerMinutes: 0,
+  geminiApiKey: "",
 };
 
 let settings: Settings = { ...DEFAULTS, hotkeys: { ...DEFAULT_HOTKEYS } };
@@ -94,6 +96,7 @@ function parse(raw: string): Settings {
     lastDeckPath: typeof o.lastDeckPath === "string" ? o.lastDeckPath : null,
     hotkeys: parseHotkeys(o.hotkeys),
     timerMinutes: parseTimerMinutes(o.timerMinutes),
+    geminiApiKey: typeof o.geminiApiKey === "string" ? o.geminiApiKey : "",
   };
 }
 

@@ -38,6 +38,12 @@ const bodyWrapperEl = el("body-wrapper");
 const chatPanelEl = el("chat-panel");
 const chatCloseEl = el<HTMLButtonElement>("chat-close");
 const chatInputEl = el<HTMLTextAreaElement>("chat-input");
+const chatSendEl = el<HTMLButtonElement>("chat-send");
+const chatMessagesEl = el("chat-messages");
+const chatEmptyEl = el("chat-empty");
+const apiKeyInputEl = el<HTMLInputElement>("api-key-input");
+const apiKeySaveEl = el<HTMLButtonElement>("api-key-save");
+const apiKeyStatusEl = el("api-key-status");
 const timerToggleEl = el<HTMLButtonElement>("timer-toggle");
 const timerFormEl = el<HTMLFormElement>("timer-form");
 const timerInputEl = el<HTMLInputElement>("timer-input");
@@ -47,6 +53,8 @@ let recording: HotkeyAction | null = null;
 let lastHotkeyJson = "";
 let lastState: CueState;
 let isBodyVisible = false;
+let chatBusy = false;
+let currentModelBubble: HTMLElement | null = null;
 
 let lastOpened: "deck" | "chat" | "settings" = "deck";
 
@@ -265,6 +273,67 @@ function closeTimerForm(): void {
   timerFormEl.hidden = true;
 }
 
+function chatScrollToBottom(): void {
+  const body = chatMessagesEl.parentElement;
+  if (body) body.scrollTop = body.scrollHeight;
+}
+
+function chatAppendUser(text: string): void {
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble chat-bubble-user";
+  bubble.textContent = text;
+  chatMessagesEl.append(bubble);
+  chatEmptyEl.hidden = true;
+  chatScrollToBottom();
+}
+
+function chatAppendModel(): HTMLElement {
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble chat-bubble-model";
+  bubble.textContent = "";
+  chatMessagesEl.append(bubble);
+  chatEmptyEl.hidden = true;
+  chatScrollToBottom();
+  return bubble;
+}
+
+function chatSetBusy(busy: boolean): void {
+  chatBusy = busy;
+  chatSendEl.disabled = busy;
+  chatInputEl.disabled = busy;
+}
+
+function chatSend(): void {
+  if (chatBusy) return;
+  const text = chatInputEl.value.trim();
+  if (text.length === 0) return;
+
+  if (!lastState.hasApiKey) {
+    apiKeyStatusEl.textContent =
+      "API key Gemini belum diset. Isi di Settings atau set GEMINI_API_KEY.";
+    window.cue.setSettingsOpen(true);
+    return;
+  }
+
+  chatInputEl.value = "";
+  resizeChatInput();
+  chatAppendUser(text);
+  currentModelBubble = chatAppendModel();
+  chatSetBusy(true);
+  window.cue.sendChatMessage(text);
+}
+
+function renderApiKeyStatus(s: CueState): void {
+  if (s.hasApiKey) {
+    apiKeyStatusEl.textContent = "API key tersimpan.";
+    apiKeyStatusEl.classList.remove("warn");
+  } else {
+    apiKeyStatusEl.textContent =
+      "Belum ada API key. Chat tidak akan berfungsi.";
+    apiKeyStatusEl.classList.add("warn");
+  }
+}
+
 function render(s: CueState): void {
   lastState = s;
 
@@ -344,6 +413,7 @@ function render(s: CueState): void {
   renderHotkeys(s);
   renderClock(s);
   renderTimerToggle(s);
+  renderApiKeyStatus(s);
 
   bodyWrapperEl.hidden = !isBodyVisible;
   document.body.classList.toggle("show-body", isBodyVisible);
@@ -421,6 +491,24 @@ hotkeyResetEl.addEventListener("click", () => {
   void window.cue.resetHotkeys();
 });
 
+apiKeySaveEl.addEventListener("click", async () => {
+  const key = apiKeyInputEl.value.trim();
+  if (key.length === 0) {
+    apiKeyStatusEl.textContent = "API key kosong.";
+    return;
+  }
+  apiKeyStatusEl.textContent = "Menyimpan…";
+  const ok = await window.cue.setApiKey(key);
+  apiKeyInputEl.value = "";
+  if (ok) {
+    apiKeyStatusEl.textContent = "API key tersimpan.";
+    apiKeyStatusEl.classList.remove("warn");
+  } else {
+    apiKeyStatusEl.textContent = "Gagal menyimpan API key.";
+    apiKeyStatusEl.classList.add("warn");
+  }
+});
+
 timerToggleEl.addEventListener("click", () => {
   const status = lastState.timer.status;
   if (status === "running" || status === "paused") {
@@ -452,6 +540,41 @@ timerInputEl.addEventListener("keydown", (e) => {
 });
 
 chatInputEl.addEventListener("input", resizeChatInput);
+
+chatInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    chatSend();
+  }
+});
+
+chatSendEl.addEventListener("click", chatSend);
+
+window.cue.onChatUser((text) => {
+  // Pesan user sudah ditampilkan optimistis; ini hanya cadangan
+  // jika ada sumber lain (misal command) yang mengirim pesan.
+  void text;
+});
+
+window.cue.onChatChunk((text) => {
+  if (!currentModelBubble) currentModelBubble = chatAppendModel();
+  currentModelBubble.textContent += text;
+  chatScrollToBottom();
+});
+
+window.cue.onChatDone(() => {
+  chatSetBusy(false);
+  currentModelBubble = null;
+});
+
+window.cue.onChatError((msg) => {
+  if (currentModelBubble) {
+    currentModelBubble.textContent = `Error: ${msg}`;
+    currentModelBubble.classList.add("chat-bubble-error");
+  }
+  chatSetBusy(false);
+  currentModelBubble = null;
+});
 
 buildHotkeyRows();
 resizeChatInput();

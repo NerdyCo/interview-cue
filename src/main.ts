@@ -25,8 +25,14 @@ import {
   toggleTimer,
 } from "./main/overlay";
 import { applyHotkeys, initHotkeys, unregisterHotkeys } from "./main/hotkeys";
-import { flushSettings, getSettings, loadSettings } from "./main/store";
+import {
+  flushSettings,
+  getSettings,
+  loadSettings,
+  saveSettings,
+} from "./main/store";
 import { createTray, destroyTray } from "./main/tray";
+import { hasApiKey, resetChatSession, streamChat } from "./main/chat";
 import { IPC, type HotkeyAction, type OverlayMode } from "./shared/ipc";
 
 if (started) app.quit();
@@ -78,6 +84,31 @@ app.whenReady().then(async () => {
     rebindHotkey(action, accel),
   );
   ipcMain.handle(IPC.resetHotkeys, () => resetHotkeys());
+
+  ipcMain.handle(IPC.setApiKey, (_e, key: string) => {
+    saveSettings({ geminiApiKey: key.trim() });
+    resetChatSession();
+    return hasApiKey();
+  });
+
+  ipcMain.on(IPC.clearChat, () => resetChatSession());
+
+  ipcMain.on(IPC.sendChatMessage, async (e, text: string) => {
+    const trimmed = text.trim();
+    if (trimmed.length === 0) return;
+
+    e.sender.send(IPC.chatUser, trimmed);
+
+    try {
+      await streamChat(trimmed, (chunk) => {
+        e.sender.send(IPC.chatChunk, chunk);
+      });
+      e.sender.send(IPC.chatDone);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      e.sender.send(IPC.chatError, msg);
+    }
+  });
 
   reportHotkeyConflicts(applyHotkeys(getSettings().hotkeys));
   await reopenLastDeck();

@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld("cue", {
   startTimer: (minutes) => ipcRenderer.send(IPC.startTimer, minutes),
   toggleTimer: () => ipcRenderer.send(IPC.toggleTimer),
   resetTimer: () => ipcRenderer.send(IPC.resetTimer),
+  sendChatMessage: (text) => ipcRenderer.send(IPC.sendChatMessage, text),
+  clearChat: () => ipcRenderer.send(IPC.clearChat),
+  setApiKey: (key) => ipcRenderer.invoke(IPC.setApiKey, key),
   ackDisclaimer: () => ipcRenderer.invoke(IPC.ackDisclaimer),
   openDeck: () => ipcRenderer.invoke(IPC.openDeck),
   nextCard: () => ipcRenderer.send(IPC.nextCard),
@@ -22,5 +25,17 @@ contextBridge.exposeInMainWorld("cue", {
   getState: () => ipcRenderer.invoke(IPC.getState),
   onState: (cb) => {
     ipcRenderer.on(IPC.state, (_e, s: CueState) => cb(s));
+  },
+  onChatChunk: (cb) => {
+    ipcRenderer.on(IPC.chatChunk, (_e, text: string) => cb(text));
+  },
+  onChatDone: (cb) => {
+    ipcRenderer.on(IPC.chatDone, () => cb());
+  },
+  onChatError: (cb) => {
+    ipcRenderer.on(IPC.chatError, (_e, msg: string) => cb(msg));
+  },
+  onChatUser: (cb) => {
+    ipcRenderer.on(IPC.chatUser, (_e, text: string) => cb(text));
   },
 } satisfies CueApi);
