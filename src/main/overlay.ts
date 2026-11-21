@@ -36,10 +36,13 @@ const state: CueState = {
   hotkeyConflicts: [],
   settingsOpen: false,
   chatOpen: false,
+  timer: { status: "idle", remaining: 0, total: 0 },
+  timerMinutes: 0,
 };
 
 let win: BrowserWindow | null = null;
 let deckPath: string | null = null;
+let timerHandle: NodeJS.Timeout | null = null;
 
 export function attachOverlay(window: BrowserWindow): void {
   win = window;
@@ -47,6 +50,7 @@ export function attachOverlay(window: BrowserWindow): void {
   const saved = getSettings();
   state.disclaimerAcked = saved.disclaimerAcked;
   state.hotkeys = saved.hotkeys;
+  state.timerMinutes = saved.timerMinutes;
 
   restoreBounds(saved.bounds);
 
@@ -234,6 +238,57 @@ async function loadAndWatch(
   applyState();
 }
 
+function stopTimerTick(): void {
+  if (timerHandle) {
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+}
+
+function tickTimer(): void {
+  if (state.timer.status !== "running") return;
+
+  state.timer.remaining = Math.max(0, state.timer.remaining - 1);
+
+  if (state.timer.remaining === 0) {
+    state.timer.status = "idle";
+    stopTimerTick();
+  }
+
+  applyState();
+}
+
+export function startTimer(minutes: number): void {
+  const m = Math.max(0, Math.min(600, Math.floor(minutes)));
+  if (m <= 0) return;
+
+  state.timerMinutes = m;
+  saveSettings({ timerMinutes: m });
+
+  state.timer = { status: "running", remaining: m * 60, total: m * 60 };
+  stopTimerTick();
+  timerHandle = setInterval(tickTimer, 1000);
+  applyState();
+}
+
+export function toggleTimer(): void {
+  if (state.timer.status === "running") {
+    state.timer.status = "paused";
+    stopTimerTick();
+  } else if (state.timer.status === "paused") {
+    state.timer.status = "running";
+    stopTimerTick();
+    timerHandle = setInterval(tickTimer, 1000);
+  }
+  applyState();
+}
+
+export function resetTimer(): void {
+  stopTimerTick();
+  state.timer = { status: "idle", remaining: 0, total: 0 };
+  applyState();
+}
+
 export async function rebindHotkey(
   action: HotkeyAction,
   accelerator: string,
@@ -274,6 +329,7 @@ export function reportHotkeyConflicts(failed: HotkeyAction[]): void {
 }
 
 export async function cleanupOverlay(): Promise<void> {
+  stopTimerTick();
   await stopWatching();
 }
 

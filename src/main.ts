@@ -14,12 +14,15 @@ import {
   reopenLastDeck,
   reportHotkeyConflicts,
   resetHotkeys,
+  resetTimer,
   setMode,
   setSettingsOpen,
+  startTimer,
   toggleChat,
   toggleMode,
   togglePrivate,
   toggleSession,
+  toggleTimer,
 } from "./main/overlay";
 import { applyHotkeys, initHotkeys, unregisterHotkeys } from "./main/hotkeys";
 import { flushSettings, getSettings, loadSettings } from "./main/store";
@@ -67,6 +70,9 @@ app.whenReady().then(async () => {
   ipcMain.handle(IPC.openDeck, () => openDeck());
   ipcMain.on(IPC.nextCard, () => nextCard());
   ipcMain.on(IPC.prevCard, () => prevCard());
+  ipcMain.on(IPC.startTimer, (_e, minutes: number) => startTimer(minutes));
+  ipcMain.on(IPC.toggleTimer, () => toggleTimer());
+  ipcMain.on(IPC.resetTimer, () => resetTimer());
   ipcMain.handle(IPC.getState, () => getCueState());
   ipcMain.handle(IPC.rebindHotkey, (_e, action: HotkeyAction, accel: string) =>
     rebindHotkey(action, accel),

@@ -28,6 +28,7 @@ export interface Settings {
   bounds: Bounds | null;
   lastDeckPath: string | null;
   hotkeys: HotkeyMap;
+  timerMinutes: number;
 }
 
 const DEFAULTS: Settings = {
@@ -35,6 +36,7 @@ const DEFAULTS: Settings = {
   bounds: null,
   lastDeckPath: null,
   hotkeys: { ...DEFAULT_HOTKEYS },
+  timerMinutes: 0,
 };
 
 let settings: Settings = { ...DEFAULTS, hotkeys: { ...DEFAULT_HOTKEYS } };
@@ -73,6 +75,13 @@ function parseHotkeys(v: unknown): HotkeyMap {
   return result;
 }
 
+function parseTimerMinutes(v: unknown): number {
+  if (!isFiniteNumber(v)) return 0;
+  const n = Math.floor(v);
+  if (n <= 0) return 0;
+  return Math.min(n, 600);
+}
+
 function parse(raw: string): Settings {
   const data: unknown = JSON.parse(raw);
   if (typeof data !== "object" || data === null) {
@@ -84,6 +93,7 @@ function parse(raw: string): Settings {
     bounds: parseBounds(o.bounds),
     lastDeckPath: typeof o.lastDeckPath === "string" ? o.lastDeckPath : null,
     hotkeys: parseHotkeys(o.hotkeys),
+    timerMinutes: parseTimerMinutes(o.timerMinutes),
   };
 }
 

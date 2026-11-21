@@ -1,5 +1,13 @@
 export type OverlayMode = "read" | "interact";
 
+export type TimerStatus = "idle" | "running" | "paused";
+
+export interface TimerState {
+  status: TimerStatus;
+  remaining: number;
+  total: number;
+}
+
 export interface CueCard {
   title: string;
   html: string;
@@ -48,6 +56,8 @@ export interface CueState {
   hotkeyConflicts: HotkeyAction[];
   settingsOpen: boolean;
   chatOpen: boolean;
+  timer: TimerState;
+  timerMinutes: number;
 }
 
 export interface CueApi {
@@ -62,6 +72,9 @@ export interface CueApi {
   prevCard(): void;
   setSettingsOpen(open: boolean): void;
   toggleChat(): void;
+  startTimer(minutes: number): void;
+  toggleTimer(): void;
+  resetTimer(): void;
   rebindHotkey(
     action: HotkeyAction,
     accelerator: string,
@@ -83,6 +96,9 @@ export const IPC = {
   prevCard: "cue:prev-card",
   setSettingsOpen: "cue:set-settings-open",
   toggleChat: "cue:toggle-chat",
+  startTimer: "cue:start-timer",
+  toggleTimer: "cue:toggle-timer",
+  resetTimer: "cue:reset-timer",
   rebindHotkey: "cue:rebind-hotkey",
   resetHotkeys: "cue:reset-hotkeys",
   getState: "cue:get-state",

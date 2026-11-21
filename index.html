@@ -107,6 +107,18 @@
 
         <div id="status">
           <button
+            id="timer-toggle"
+            class="icon-btn"
+            type="button"
+            title="Mulai timer"
+            aria-label="Timer"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M8 4.5V8l2.2 1.6" />
+            </svg>
+          </button>
+          <button
             id="collapse"
             class="icon-btn"
             type="button"
@@ -117,7 +129,7 @@
               <path d="M4.5 9.8 8 6.3l3.5 3.5" />
             </svg>
           </button>
-          <span id="clock">--:--</span>
+          <span id="clock" role="timer" aria-live="off">--:--</span>
           <span id="session-dot" title="Penanda sesi mati"></span>
         </div>
 
@@ -132,6 +144,21 @@
           </svg>
         </button>
       </header>
+
+      <form id="timer-form" hidden>
+        <input
+          id="timer-input"
+          type="number"
+          min="1"
+          max="600"
+          step="1"
+          inputmode="numeric"
+          placeholder="menit"
+          autocomplete="off"
+        />
+        <button type="submit">Mulai</button>
+        <button type="button" id="timer-cancel">Batal</button>
+      </form>
 
       <!-- BODY: floating card terpisah -->
       <div id="body-wrapper" hidden>

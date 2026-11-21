@@ -38,6 +38,10 @@ const bodyWrapperEl = el("body-wrapper");
 const chatPanelEl = el("chat-panel");
 const chatCloseEl = el<HTMLButtonElement>("chat-close");
 const chatInputEl = el<HTMLTextAreaElement>("chat-input");
+const timerToggleEl = el<HTMLButtonElement>("timer-toggle");
+const timerFormEl = el<HTMLFormElement>("timer-form");
+const timerInputEl = el<HTMLInputElement>("timer-input");
+const timerCancelEl = el<HTMLButtonElement>("timer-cancel");
 
 let recording: HotkeyAction | null = null;
 let lastHotkeyJson = "";
@@ -47,6 +51,10 @@ let isBodyVisible = false;
 let lastOpened: "deck" | "chat" | "settings" = "deck";
 
 const CHAT_INPUT_MAX_LINES = 3;
+
+const ICON_CLOCK = `<circle cx="8" cy="8" r="6" /><path d="M8 4.5V8l2.2 1.6" />`;
+const ICON_PAUSE = `<path d="M6 4v8M10 4v8" />`;
+const ICON_PLAY = `<path d="M6.5 4.5 11.5 8l-5 3.5Z" />`;
 
 function chatInputMaxHeight(): number {
   const cs = getComputedStyle(chatInputEl);
@@ -194,11 +202,67 @@ function smartToggle(): void {
   }
 }
 
-function tickClock(): void {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
-  clockEl.textContent = `${hh}:${mm}`;
+function fmtTimer(sec: number): string {
+  const s = Math.max(0, sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${pad(m)}:${pad(ss)}`;
+}
+
+function renderClock(s: CueState): void {
+  const { status, remaining, total } = s.timer;
+
+  if (status === "idle" && total === 0) {
+    clockEl.textContent = "--:--";
+    clockEl.classList.remove("warn", "done");
+    return;
+  }
+
+  clockEl.textContent = fmtTimer(remaining);
+  const warn =
+    status !== "idle" &&
+    remaining > 0 &&
+    remaining <= Math.max(10, total * 0.1);
+  clockEl.classList.toggle("warn", warn);
+  clockEl.classList.toggle("done", remaining === 0);
+}
+
+function renderTimerToggle(s: CueState): void {
+  const status = s.timer.status;
+
+  timerToggleEl.classList.toggle("on", status !== "idle");
+  timerToggleEl.title =
+    status === "running"
+      ? "Jeda timer"
+      : status === "paused"
+        ? "Lanjutkan timer"
+        : "Mulai timer";
+
+  const svg = timerToggleEl.firstElementChild;
+  if (!svg) return;
+
+  const path =
+    status === "running"
+      ? ICON_PAUSE
+      : status === "paused"
+        ? ICON_PLAY
+        : ICON_CLOCK;
+
+  svg.innerHTML = path;
+}
+
+function openTimerForm(): void {
+  timerFormEl.hidden = false;
+  timerInputEl.value =
+    lastState.timerMinutes > 0 ? String(lastState.timerMinutes) : "";
+  timerInputEl.focus();
+  timerInputEl.select();
+}
+
+function closeTimerForm(): void {
+  timerFormEl.hidden = true;
 }
 
 function render(s: CueState): void {
@@ -278,6 +342,8 @@ function render(s: CueState): void {
   errorEl.hidden = s.error === null;
 
   renderHotkeys(s);
+  renderClock(s);
+  renderTimerToggle(s);
 
   bodyWrapperEl.hidden = !isBodyVisible;
   document.body.classList.toggle("show-body", isBodyVisible);
@@ -355,11 +421,39 @@ hotkeyResetEl.addEventListener("click", () => {
   void window.cue.resetHotkeys();
 });
 
+timerToggleEl.addEventListener("click", () => {
+  const status = lastState.timer.status;
+  if (status === "running" || status === "paused") {
+    window.cue.toggleTimer();
+  } else {
+    openTimerForm();
+  }
+});
+
+clockEl.addEventListener("click", () => {
+  if (lastState.timer.status === "idle") openTimerForm();
+});
+
+timerFormEl.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const m = Math.floor(Number(timerInputEl.value));
+  if (!Number.isFinite(m) || m <= 0) return;
+  window.cue.startTimer(m);
+  closeTimerForm();
+});
+
+timerCancelEl.addEventListener("click", closeTimerForm);
+
+timerInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closeTimerForm();
+  }
+});
+
 chatInputEl.addEventListener("input", resizeChatInput);
 
 buildHotkeyRows();
-tickClock();
-setInterval(tickClock, 10_000);
 resizeChatInput();
 window.cue.onState(render);
 window.cue.getState().then(render);
