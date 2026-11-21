@@ -11,6 +11,7 @@ import {
   panicHide,
   prevCard,
   rebindHotkey,
+  refreshState,
   reopenLastDeck,
   reportHotkeyConflicts,
   resetHotkeys,
@@ -88,6 +89,7 @@ app.whenReady().then(async () => {
   ipcMain.handle(IPC.setApiKey, (_e, key: string) => {
     saveSettings({ geminiApiKey: key.trim() });
     resetChatSession();
+    refreshState();
     return hasApiKey();
   });
 

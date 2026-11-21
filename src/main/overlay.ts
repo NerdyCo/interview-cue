@@ -20,6 +20,7 @@ import { hideAll, isHidden, showAll } from "./visibility";
 import { updateTray } from "./tray";
 import { applyHotkeys } from "./hotkeys";
 import { stopWatching, watchDeck } from "./watcher";
+import { hasApiKey } from "./chat";
 
 const state: CueState = {
   mode: "interact",
@@ -38,6 +39,7 @@ const state: CueState = {
   chatOpen: false,
   timer: { status: "idle", remaining: 0, total: 0 },
   timerMinutes: 0,
+  hasApiKey: false,
 };
 
 let win: BrowserWindow | null = null;
@@ -333,6 +335,10 @@ export async function cleanupOverlay(): Promise<void> {
   await stopWatching();
 }
 
+export function refreshState(): void {
+  applyState();
+}
+
 function applyState(): void {
   if (!win || win.isDestroyed()) return;
 
@@ -346,6 +352,8 @@ function applyState(): void {
 
   win.setContentProtection(state.privateMode);
   state.contentProtected = win.isContentProtected();
+
+  state.hasApiKey = hasApiKey();
 
   win.setBounds(bounds);
   win.webContents.send(IPC.state, getCueState());

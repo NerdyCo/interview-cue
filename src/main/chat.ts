@@ -1,9 +1,13 @@
-import { GoogleGenerativeAI, type ChatSession } from "@google/generative-ai";
+import { GoogleGenAI, ThinkingLevel, type Chat } from "@google/genai";
 import { getSettings } from "./store";
 
-const MODEL_ID = "gemini-2.5-flash";
+const MODEL_ID = "gemini-3.8-flash";
 
-let chatSession: ChatSession | null = null;
+const SYSTEM_INSTRUCTION =
+  "Kamu adalah asisten AI di overlay cue card untuk presenter. " +
+  "Jawab singkat, padat, dan langsung. Bahasa Indonesia kecuali diminta lain.";
+
+let chat: Chat | null = null;
 let apiKeyUsed = "";
 
 function getApiKey(): string {
@@ -12,7 +16,7 @@ function getApiKey(): string {
   return getSettings().geminiApiKey.trim();
 }
 
-function ensureSession(): ChatSession {
+function ensureChat(): Chat {
   const key = getApiKey();
   if (key.length === 0) {
     throw new Error(
@@ -20,22 +24,25 @@ function ensureSession(): ChatSession {
     );
   }
 
-  if (chatSession && apiKeyUsed === key) return chatSession;
+  if (chat && apiKeyUsed === key) return chat;
 
-  const genAI = new GoogleGenerativeAI(key);
-  const model = genAI.getGenerativeModel({
+  const ai = new GoogleGenAI({ apiKey: key });
+
+  chat = ai.chats.create({
     model: MODEL_ID,
-    systemInstruction:
-      "Kamu adalah asisten AI di overlay cue card untuk presenter. Jawab singkat, padat, dan langsung. Bahasa Indonesia kecuali diminta lain.",
+    config: {
+      systemInstruction: SYSTEM_INSTRUCTION,
+      // Overlay butuh jawaban cepat, bukan reasoning panjang.
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+    },
   });
 
-  chatSession = model.startChat({ history: [] });
   apiKeyUsed = key;
-  return chatSession;
+  return chat;
 }
 
 export function resetChatSession(): void {
-  chatSession = null;
+  chat = null;
   apiKeyUsed = "";
 }
 
@@ -47,11 +54,11 @@ export async function streamChat(
   text: string,
   onChunk: (t: string) => void,
 ): Promise<void> {
-  const session = ensureSession();
-  const result = await session.sendMessageStream(text);
+  const session = ensureChat();
+  const stream = await session.sendMessageStream({ message: text });
 
-  for await (const chunk of result.stream) {
-    const chunkText = chunk.text();
-    if (chunkText.length > 0) onChunk(chunkText);
+  for await (const chunk of stream) {
+    const chunkText = chunk.text;
+    if (chunkText) onChunk(chunkText);
   }
 }
