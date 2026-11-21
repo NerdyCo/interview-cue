@@ -90,6 +90,49 @@ function buildHotkeyRows(): void {
   }
 }
 
+function keyLabel(part: string): string {
+  switch (part) {
+    case "CommandOrControl":
+      return "Ctrl";
+    case "Super":
+      return "Win";
+    case "Return":
+      return "Enter";
+    case "Escape":
+      return "Esc";
+    case "Up":
+      return "↑";
+    case "Down":
+      return "↓";
+    case "Left":
+      return "←";
+    case "Right":
+      return "→";
+    default:
+      return part;
+  }
+}
+
+function renderKeycaps(btn: HTMLButtonElement, accelerator: string): void {
+  const parts = accelerator.split("+").filter((p) => p.length > 0);
+  const frag = document.createDocumentFragment();
+
+  parts.forEach((part, i) => {
+    if (i > 0) {
+      const plus = document.createElement("span");
+      plus.className = "hk-plus";
+      plus.textContent = "+";
+      frag.append(plus);
+    }
+
+    const kbd = document.createElement("kbd");
+    kbd.textContent = keyLabel(part);
+    frag.append(kbd);
+  });
+
+  btn.replaceChildren(frag);
+}
+
 function renderHotkeys(s: CueState): void {
   const json = JSON.stringify([s.hotkeys, s.hotkeyConflicts, recording]);
   if (json === lastHotkeyJson) return;
@@ -99,10 +142,16 @@ function renderHotkeys(s: CueState): void {
     ".hk-key",
   )) {
     const action = btn.dataset.action as HotkeyAction;
+    const isRecording = recording === action;
+
     btn.classList.toggle("conflict", s.hotkeyConflicts.includes(action));
-    btn.classList.toggle("recording", recording === action);
-    btn.textContent =
-      recording === action ? "Tekan tombol…" : s.hotkeys[action];
+    btn.classList.toggle("recording", isRecording);
+
+    if (isRecording) {
+      btn.textContent = "Tekan tombol…";
+    } else {
+      renderKeycaps(btn, s.hotkeys[action]);
+    }
   }
 }
 
