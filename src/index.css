@@ -244,7 +244,9 @@ body.read #toggle .slash {
 #collapse svg {
   transition: transform 180ms var(--ease);
 }
-body.show-body #collapse svg {
+body.show-body #collapse svg,
+body.show-settings #collapse svg,
+body.show-chat #collapse svg {
   transform: rotate(180deg);
 }
 
@@ -817,13 +819,13 @@ body.show-chat #body-wrapper {
   background: var(--surface);
   display: flex;
   gap: 6px;
-  align-items: center;
+  align-items: flex-end;
 }
 
 #chat-input {
   flex: 1 1 auto;
   min-height: 30px;
-  max-height: 120px;
+  max-height: calc(3 * 1.4em + 16px);
   padding: 7px 10px;
   font: inherit;
   font-size: 11px;
@@ -835,9 +837,10 @@ body.show-chat #body-wrapper {
   outline: none;
   resize: none;
   overflow-y: auto;
-  field-sizing: content;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
   transition:
-    height 100ms var(--ease),
     border-color 150ms var(--ease),
     background 150ms var(--ease);
 }
@@ -849,10 +852,26 @@ body.show-chat #body-wrapper {
   color: var(--dim);
 }
 
+#chat-input::-webkit-scrollbar {
+  width: 2px;
+}
+#chat-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+#chat-input::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+#chat-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 #chat-send {
   flex: 0 0 auto;
+  align-self: flex-end;
   width: 30px;
   height: 30px;
+  margin-bottom: 0;
   display: grid;
   place-items: center;
   color: var(--surface-solid);

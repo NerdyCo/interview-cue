@@ -44,7 +44,26 @@ let lastHotkeyJson = "";
 let lastState: CueState;
 let isBodyVisible = false;
 
-let lastOpened: "deck" | "chat" = "deck";
+let lastOpened: "deck" | "chat" | "settings" = "deck";
+
+const CHAT_INPUT_MAX_LINES = 3;
+
+function chatInputMaxHeight(): number {
+  const cs = getComputedStyle(chatInputEl);
+  const lineHeight = parseFloat(cs.lineHeight) || 15.4;
+  const padding =
+    (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  const border =
+    (parseFloat(cs.borderTopWidth) || 0) +
+    (parseFloat(cs.borderBottomWidth) || 0);
+  return lineHeight * CHAT_INPUT_MAX_LINES + padding + border;
+}
+
+function resizeChatInput(): void {
+  chatInputEl.style.height = "auto";
+  const max = chatInputMaxHeight();
+  chatInputEl.style.height = Math.min(chatInputEl.scrollHeight, max) + "px";
+}
 
 function buildHotkeyRows(): void {
   hotkeyListEl.replaceChildren();
@@ -107,15 +126,19 @@ function setBodyVisible(visible: boolean): void {
 }
 
 function smartToggle(): void {
-  const isChatOpen = lastState?.chatOpen;
+  const settingsOpen = lastState?.settingsOpen === true;
+  const chatOpen = lastState?.chatOpen === true;
 
-  if (isChatOpen || isBodyVisible) {
-    if (isChatOpen) window.cue.toggleChat();
+  if (settingsOpen || chatOpen || isBodyVisible) {
+    if (settingsOpen) window.cue.setSettingsOpen(false);
+    if (chatOpen) window.cue.toggleChat();
     if (isBodyVisible) setBodyVisible(false);
     return;
   }
 
-  if (lastOpened === "chat") {
+  if (lastOpened === "settings") {
+    window.cue.setSettingsOpen(true);
+  } else if (lastOpened === "chat") {
     window.cue.toggleChat();
   } else {
     setBodyVisible(true);
@@ -135,9 +158,11 @@ function render(s: CueState): void {
   const isRead = s.mode === "read";
   const isChatOpen = s.chatOpen;
 
-  if (isChatOpen) {
+  if (s.settingsOpen) {
+    lastOpened = "settings";
+  } else if (isChatOpen) {
     lastOpened = "chat";
-  } else if (isBodyVisible && !s.settingsOpen) {
+  } else if (isBodyVisible) {
     lastOpened = "deck";
   }
 
@@ -192,6 +217,8 @@ function render(s: CueState): void {
   settingsPanelEl.hidden = !s.settingsOpen;
   disclaimerEl.hidden = s.disclaimerAcked;
   chatPanelEl.hidden = !isChatOpen;
+
+  if (isChatOpen) resizeChatInput();
 
   osStatusEl.textContent = s.contentProtected ? "OS: excluded" : "OS: visible";
   osStatusEl.classList.toggle("mismatch", s.privateMode !== s.contentProtected);
@@ -279,13 +306,11 @@ hotkeyResetEl.addEventListener("click", () => {
   void window.cue.resetHotkeys();
 });
 
-chatInputEl.addEventListener("input", () => {
-  chatInputEl.style.height = "auto";
-  chatInputEl.style.height = Math.min(chatInputEl.scrollHeight, 120) + "px";
-});
+chatInputEl.addEventListener("input", resizeChatInput);
 
 buildHotkeyRows();
 tickClock();
 setInterval(tickClock, 10_000);
+resizeChatInput();
 window.cue.onState(render);
 window.cue.getState().then(render);
