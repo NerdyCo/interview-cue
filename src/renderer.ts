@@ -37,11 +37,14 @@ const settingsCloseEl = el<HTMLButtonElement>("settings-close");
 const bodyWrapperEl = el("body-wrapper");
 const chatPanelEl = el("chat-panel");
 const chatCloseEl = el<HTMLButtonElement>("chat-close");
+const chatInputEl = el<HTMLTextAreaElement>("chat-input");
 
 let recording: HotkeyAction | null = null;
 let lastHotkeyJson = "";
 let lastState: CueState;
 let isBodyVisible = false;
+
+let lastOpened: "deck" | "chat" = "deck";
 
 function buildHotkeyRows(): void {
   hotkeyListEl.replaceChildren();
@@ -84,10 +87,6 @@ function renderHotkeys(s: CueState): void {
   }
 }
 
-/**
- * Tombol berikon TIDAK boleh diset textContent — itu menghapus SVG-nya.
- * Untuk .tb-btn (ikon + label), update hanya span label-nya.
- */
 function setIconState(
   btn: HTMLButtonElement,
   on: boolean,
@@ -107,6 +106,22 @@ function setBodyVisible(visible: boolean): void {
   collapseEl.title = visible ? "Tutup kartu" : "Buka kartu";
 }
 
+function smartToggle(): void {
+  const isChatOpen = lastState?.chatOpen;
+
+  if (isChatOpen || isBodyVisible) {
+    if (isChatOpen) window.cue.toggleChat();
+    if (isBodyVisible) setBodyVisible(false);
+    return;
+  }
+
+  if (lastOpened === "chat") {
+    window.cue.toggleChat();
+  } else {
+    setBodyVisible(true);
+  }
+}
+
 function tickClock(): void {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, "0");
@@ -119,6 +134,12 @@ function render(s: CueState): void {
 
   const isRead = s.mode === "read";
   const isChatOpen = s.chatOpen;
+
+  if (isChatOpen) {
+    lastOpened = "chat";
+  } else if (isBodyVisible && !s.settingsOpen) {
+    lastOpened = "deck";
+  }
 
   document.body.classList.toggle("read", isRead);
   document.body.classList.toggle("private", s.privateMode);
@@ -182,11 +203,13 @@ function render(s: CueState): void {
 
   renderHotkeys(s);
 
+  bodyWrapperEl.hidden = !isBodyVisible;
+  document.body.classList.toggle("show-body", isBodyVisible);
+  collapseEl.setAttribute("aria-expanded", String(isBodyVisible));
+  collapseEl.title = isBodyVisible ? "Tutup kartu" : "Buka kartu";
+
   const card = s.cards[s.cardIndex];
-
   if (card && !isChatOpen && !s.settingsOpen && s.disclaimerAcked) {
-    if (!isBodyVisible) setBodyVisible(true);
-
     counterEl.textContent = `${s.cardIndex + 1}/${s.cards.length}`;
     titleEl.textContent = card.title;
     bodyEl.innerHTML = DOMPurify.sanitize(card.html, {
@@ -200,14 +223,8 @@ function render(s: CueState): void {
   }
 }
 
-collapseEl.addEventListener("click", () => {
-  if (lastState?.chatOpen) window.cue.toggleChat();
-  else setBodyVisible(!isBodyVisible);
-});
-gripEl.addEventListener("click", () => {
-  if (lastState?.chatOpen) window.cue.toggleChat();
-  else setBodyVisible(!isBodyVisible);
-});
+collapseEl.addEventListener("click", smartToggle);
+gripEl.addEventListener("click", smartToggle);
 
 window.addEventListener(
   "keydown",
@@ -240,21 +257,31 @@ chatCloseEl.addEventListener("click", () => window.cue.toggleChat());
 privateEl.addEventListener("click", () => window.cue.togglePrivate());
 sessionEl.addEventListener("click", () => window.cue.toggleSession());
 hideEl.addEventListener("click", () => window.cue.panicHide());
+
 openEl.addEventListener("click", () => {
   setBodyVisible(true);
   void window.cue.openDeck();
 });
+
 ackEl.addEventListener("click", () => window.cue.ackDisclaimer());
+
 settingsEl.addEventListener("click", () =>
   window.cue.setSettingsOpen(!lastState.settingsOpen),
 );
+
 settingsCloseEl.addEventListener("click", () => {
   recording = null;
   window.cue.setSettingsOpen(false);
 });
+
 hotkeyResetEl.addEventListener("click", () => {
   recording = null;
   void window.cue.resetHotkeys();
+});
+
+chatInputEl.addEventListener("input", () => {
+  chatInputEl.style.height = "auto";
+  chatInputEl.style.height = Math.min(chatInputEl.scrollHeight, 120) + "px";
 });
 
 buildHotkeyRows();

@@ -1,10 +1,8 @@
 :root {
-  /* Palette lebih dark & neutral ala Shadcn/Zinc */
   --surface: rgba(9, 9, 11, 0.94);
   --surface-read: rgba(9, 9, 11, 0.88);
   --surface-solid: #09090b;
 
-  /* Raise & Line lebih tipis dan halus */
   --raise: rgba(255, 255, 255, 0.04);
   --raise-hi: rgba(255, 255, 255, 0.08);
   --line: rgba(255, 255, 255, 0.06);
@@ -18,13 +16,11 @@
   --accent: #60a5fa;
   --rec: #ef4444;
 
-  /* Radius lebih kecil agar lebih crisp */
   --r-sm: 4px;
   --r-md: 6px;
   --r-lg: 8px;
   --r-xl: 10px;
 
-  /* Ease-out expo untuk feel lebih premium */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -49,7 +45,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* ========== PANEL ========== */
 #panel {
   position: relative;
   display: flex;
@@ -61,7 +56,6 @@ body {
   background: transparent;
 }
 
-/* ========== TOOLBAR: Lebih Compact & Dark ========== */
 #bar {
   flex: 0 0 auto;
   display: flex;
@@ -89,7 +83,6 @@ body {
   margin: 0 2px;
 }
 
-/* Grip: Lebih kecil & minimalis */
 #grip {
   app-region: drag;
   flex: 0 0 auto;
@@ -125,7 +118,6 @@ body {
   min-width: 0;
 }
 
-/* Tombol Toggle (Deck/Chat/Interact): Lebih Pendek & Tipis */
 .tb-btn {
   app-region: no-drag;
   display: flex;
@@ -172,7 +164,6 @@ body {
   stroke-linejoin: round;
 }
 
-/* Tombol ikon saja: Lebih Kecil */
 .icon-btn {
   app-region: no-drag;
   display: grid;
@@ -243,7 +234,6 @@ body.read #toggle .slash {
   stroke-dasharray: 2.36 2.36;
 }
 
-/* Cluster kanan: chevron + jam + dot sesi */
 #status {
   display: flex;
   align-items: center;
@@ -296,7 +286,6 @@ body.session #session-dot {
   border-color: rgba(252, 165, 165, 0.15);
 }
 
-/* Toolbar menyempit: label hilang dulu, ikon tetap */
 @media (max-width: 620px) {
   .tb-btn span {
     display: none;
@@ -313,7 +302,6 @@ body.session #session-dot {
   }
 }
 
-/* ========== BODY WRAPPER: floating card terpisah ========== */
 #body-wrapper {
   width: 100%;
   max-width: 480px;
@@ -344,7 +332,15 @@ body.read #body-wrapper {
   background: var(--surface-read);
 }
 
-/* ========== META BAR ========== */
+body.read #chat-panel {
+  background: var(--surface-read);
+}
+
+body.read #chat-header,
+body.read #chat-input-area {
+  background: var(--surface-read);
+}
+
 #meta {
   flex: 0 0 22px;
   display: flex;
@@ -401,7 +397,6 @@ body.read #mode {
   opacity: 1;
 }
 
-/* ========== BANNERS ========== */
 #session-banner {
   flex: 0 0 auto;
   margin: 0;
@@ -431,7 +426,6 @@ body.read #mode {
   border-bottom: 1px solid rgba(252, 165, 165, 0.12);
 }
 
-/* ========== CARD BODY ========== */
 #body {
   flex: 1 1 auto;
   min-height: 0;
@@ -545,7 +539,6 @@ body.read #mode {
   text-transform: uppercase;
 }
 
-/* ========== SCROLLBAR ========== */
 #body::-webkit-scrollbar,
 #disclaimer::-webkit-scrollbar,
 #settings-panel::-webkit-scrollbar,
@@ -575,7 +568,6 @@ body.read #mode {
   background: transparent;
 }
 
-/* ========== READ MODE ========== */
 body.read #bar {
   cursor: default;
 }
@@ -587,7 +579,6 @@ body.read #body {
   padding-top: 12px;
 }
 
-/* ========== OVERLAYS (disclaimer / settings) ========== */
 #disclaimer,
 #settings-panel {
   position: absolute;
@@ -657,7 +648,6 @@ body.read #body {
   transform: scale(0.97);
 }
 
-/* ========== HOTKEY ROWS ========== */
 .hk-row {
   display: flex;
   align-items: center;
@@ -742,14 +732,12 @@ body.read #body {
   transform: scale(0.97);
 }
 
-/* ========== VISIBILITY STATES ========== */
 body.needs-ack #body-wrapper,
 body.show-settings #body-wrapper,
 body.show-chat #body-wrapper {
   display: none;
 }
 
-/* ========== CHAT PANEL ========== */
 #chat-panel {
   width: 100%;
   max-width: 480px;
@@ -834,16 +822,22 @@ body.show-chat #body-wrapper {
 
 #chat-input {
   flex: 1 1 auto;
-  height: 30px;
-  padding: 0 10px;
+  min-height: 30px;
+  max-height: 120px;
+  padding: 7px 10px;
   font: inherit;
   font-size: 11px;
+  line-height: 1.4;
   color: var(--fg);
   background: var(--raise);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   outline: none;
+  resize: none;
+  overflow-y: auto;
+  field-sizing: content;
   transition:
+    height 100ms var(--ease),
     border-color 150ms var(--ease),
     background 150ms var(--ease);
 }
