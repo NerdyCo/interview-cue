@@ -551,8 +551,6 @@ chatInputEl.addEventListener("keydown", (e) => {
 chatSendEl.addEventListener("click", chatSend);
 
 window.cue.onChatUser((text) => {
-  // Pesan user sudah ditampilkan optimistis; ini hanya cadangan
-  // jika ada sumber lain (misal command) yang mengirim pesan.
   void text;
 });
 
